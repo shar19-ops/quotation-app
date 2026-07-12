@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>社員用見積書アプリ(雄電社様式)</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="employee-app">
+
+<div class="toolbar no-print">
+  <h1>社員用見積書アプリ(雄電社様式)</h1>
+  <div class="toolbar-buttons">
+    <button id="btnOpenFile">ファイルを開く</button>
+    <input type="file" id="fileInput" accept="application/json" style="display:none">
+    <button id="btnPrint">プレビュー</button>
+    <button id="btnMail">📧 メール送信</button>
+  </div>
+  <!-- themeColor は JS が参照するため非表示で保持 -->
+  <select id="themeColor" style="display:none">
+    <option value="blue" selected>青</option>
+    <option value="red">赤</option>
+  </select>
+  <p class="hint">「ファイルを開く」で業者から受け取った見積書JSONファイルを読み込みます。「工事情報」は修正できます。「業者(自社)情報」「明細内容」は閲覧のみで編集はできません(印刷・出力は可能です)。「プレビュー」を押すと印刷プレビューが開きます。</p>
+  <p class="hint hint-notice">添付ファイルは閲覧のみで、削除はできません。</p>
+  <p class="hint">「📧 メール送信」: 印刷プレビューが開き、「印刷実行」でPDFとして保存すると、続けてOutlook(既定のメールソフト)の新規メール画面が開きます。保存したPDFファイルはメールへ手動で添付してください(ブラウザの仕様上、自動添付はできません)。</p>
+</div>
+
+<div class="layout">
+  <!-- 入力フォーム -->
+  <section class="form-panel no-print">
+    <div class="info-columns">
+      <fieldset>
+        <legend>工事情報</legend>
+        <label>事業所(本支店区分)
+          <select id="branchType">
+            <option value="">選択してください</option>
+            <option value="本店|010">本店(010)</option>
+            <option value="東関東支店|020">東関東支店(020)</option>
+            <option value="横浜支店|030">横浜支店(030)</option>
+            <option value="大阪支店|040">大阪支店(040)</option>
+            <option value="名古屋支店|050">名古屋支店(050)</option>
+            <option value="仙台支店|060">仙台支店(060)</option>
+            <option value="北関東支店|090">北関東支店(090)</option>
+          </select>
+        </label>
+        <label>工番 <input type="text" id="projectNo" placeholder="例: 26-0000 / 26-0000A"></label>
+        <label>工事名 <input type="text" id="projectName"></label>
+        <label>施工場所 <input type="text" id="siteLocation"></label>
+        <div class="two-col">
+          <label>工期(開始) <input type="date" id="periodStart"></label>
+          <label>工期(終了) <input type="date" id="periodEnd"></label>
+        </div>
+        <label>見積有効期限(見積日より) <input type="number" id="validDays" min="0" placeholder="日間"></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>業者(自社)情報 <span class="readonly-badge">閲覧のみ</span></legend>
+        <div class="two-col">
+          <label>業者見積日 <input type="date" id="vendorQuoteDate" disabled></label>
+          <label>業者見積番号(第 ◯ 号) <input type="text" id="vendorQuoteNo" disabled></label>
+        </div>
+        <label>住所 <input type="text" id="vendorAddress" disabled></label>
+        <label>社名 <input type="text" id="vendorName" disabled></label>
+        <div class="two-col">
+          <label>電話 <input type="text" id="vendorTel" disabled></label>
+          <label>業者コード <input type="text" id="vendorCode" maxlength="5" disabled></label>
+        </div>
+        <p class="form-hint">電子印(社判・担当者印)は業者側で設定された内容がそのまま印刷に反映されます。</p>
+        <!-- 印影の位置調整はJSロジック用の非表示フィールドとして保持(社員側では編集UIなし) -->
+        <input type="hidden" id="stampX" value="1480">
+        <input type="hidden" id="stampY" value="535">
+        <input type="hidden" id="stampSize" value="50">
+        <input type="hidden" id="stampX2" value="1360">
+        <input type="hidden" id="stampY2" value="535">
+        <input type="hidden" id="stampSize2" value="50">
+        <input type="hidden" id="stampX3" value="1240">
+        <input type="hidden" id="stampY3" value="535">
+        <input type="hidden" id="stampSize3" value="50">
+        <input type="hidden" id="stampX4" value="1480">
+        <input type="hidden" id="stampY4" value="300">
+        <input type="hidden" id="stampSize4" value="110">
+      </fieldset>
+    </div>
+
+    <fieldset>
+      <legend>明細内容 <span class="readonly-badge">閲覧のみ</span></legend>
+      <table id="itemsInputTable" class="items-input-table">
+        <thead>
+          <tr>
+            <th>品名・仕様</th><th>数量</th><th>単位</th><th>単価</th><th>金額</th><th>備考</th>
+          </tr>
+        </thead>
+        <tbody id="itemsInputBody"></tbody>
+      </table>
+    </fieldset>
+
+    <fieldset>
+      <legend>法定福利費・註記 <span class="readonly-badge">閲覧のみ</span></legend>
+      <label>法定福利費(内訳・税抜見積総額に含む) <input type="number" id="welfareCost" min="0" placeholder="円" disabled></label>
+      <label>註記 <textarea id="notes" rows="4" placeholder="特記事項など" disabled></textarea></label>
+    </fieldset>
+
+    <fieldset>
+      <legend>添付ファイル(別紙) <span class="readonly-badge">閲覧のみ</span></legend>
+      <ul id="attachmentList" class="attachment-list"></ul>
+      <p class="form-hint">「表示」ボタンでダウンロードせずに画面上で内容を確認できます。添付ファイルの追加・削除はできません。</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>担当者確認印(社内)</legend>
+      <div class="two-col">
+        <label>担当者(苗字) <input type="text" id="staffStampName" placeholder="例: 山田" maxlength="10"></label>
+        <label>役職
+          <select id="staffStampTitle">
+            <option value="">（なし）</option>
+            <option value="副長">副長</option>
+            <option value="課長">課長</option>
+            <option value="工事長">工事長</option>
+            <option value="支店長">支店長</option>
+            <option value="部長">部長</option>
+            <option value="本部長">本部長</option>
+            <option value="取締役">取締役</option>
+            <option value="常務">常務</option>
+            <option value="本店長">本店長</option>
+          </select>
+        </label>
+        <label>確認日 <input type="date" id="staffStampDate"></label>
+      </div>
+      <p class="form-hint">デート印を押印したい場合、苗字を記入、役職があれば選択して下さい。苗字が空欄の場合は押印されません。</p>
+    </fieldset>
+  </section>
+</div>
+
+<!-- 印刷ソース (通常は非表示、window.print()対象) -->
+<div class="print-source" id="printSource">
+  <div id="printArea" class="quote-page">
+    <img id="bgImage" class="bg-image" src="assets/blue_bg.png" alt="">
+    <div id="overlayLayer" class="overlay-layer"></div>
+  </div>
+  <div id="printAreaAlt" class="quote-page print-only">
+    <img id="bgImageAlt" class="bg-image" src="" alt="">
+    <div id="overlayLayerAlt" class="overlay-layer"></div>
+  </div>
+</div>
+
+<!-- 印刷プレビューモーダル -->
+<div id="previewModal" class="preview-modal no-print" style="display:none;">
+  <div class="preview-modal-inner">
+    <div class="preview-modal-header">
+      <span class="preview-modal-title">印刷プレビュー</span>
+      <button class="btn-modal-close" id="btnClosePreview">✕ 閉じる</button>
+    </div>
+    <div class="preview-modal-body">
+      <p class="preview-modal-label">▼ 1ページ目</p>
+      <div id="previewPageA" class="quote-page">
+        <img id="previewBgA" class="bg-image" src="assets/blue_bg.png" alt="">
+        <div id="previewLayerA" class="overlay-layer"></div>
+      </div>
+      <p class="preview-modal-label">▼ 2ページ目</p>
+      <div id="previewPageB" class="quote-page">
+        <img id="previewBgB" class="bg-image" src="" alt="">
+        <div id="previewLayerB" class="overlay-layer"></div>
+      </div>
+    </div>
+    <p class="preview-modal-mail-hint no-print" id="previewMailHint" style="display:none;">
+      印刷画面で「PDFに保存」を選んで保存してください。保存後、Outlookの新規メール画面が自動で開きます(PDFの添付は手動で行ってください)。
+    </p>
+    <div class="preview-modal-footer">
+      <button id="btnPrintFromPreview">印刷実行</button>
+      <button class="btn-modal-close" id="btnClosePreview2">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 添付ファイル閲覧モーダル -->
+<div id="attachmentViewModal" class="preview-modal no-print" style="display:none;">
+  <div class="preview-modal-inner attachment-view-inner">
+    <div class="preview-modal-header">
+      <span class="preview-modal-title" id="attachmentViewTitle">添付ファイル</span>
+      <button class="btn-modal-close" id="btnCloseAttachmentView">✕ 閉じる</button>
+    </div>
+    <div class="preview-modal-body" id="attachmentViewBody"></div>
+  </div>
+</div>
+
+<!-- 背景画像参照用: JSがsrcを読む -->
+<img id="bgBlueSrc" src="assets/blue_bg.png" style="display:none" alt="">
+<img id="bgRedSrc"  src="assets/red_bg.png"  style="display:none" alt="">
+
+<script src="date-stamp.js"></script>
+<script src="script-employee.js"></script>
+</body>
+</html>

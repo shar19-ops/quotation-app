@@ -1,0 +1,825 @@
+<title>業者用見積書アプリ 操作マニュアル</title>
+<style>
+  :root {
+    --bg: #f2f5f9;
+    --surface: #ffffff;
+    --surface-alt: #eaeff6;
+    --ink: #1b2430;
+    --ink-soft: #4c5a6e;
+    --ink-faint: #7c8aa0;
+    --border: #d7dfea;
+    --border-strong: #b9c5d6;
+    --accent: #24488f;
+    --accent-ink: #17275a;
+    --accent-soft: #e2eaf9;
+    --stamp: #a92c28;
+    --stamp-soft: #fbebe9;
+    --amber: #8a6113;
+    --amber-soft: #fbf1dc;
+    --shadow: 0 1px 2px rgba(23, 39, 90, 0.06), 0 8px 24px rgba(23, 39, 90, 0.06);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f131a;
+      --surface: #161c27;
+      --surface-alt: #1c2432;
+      --ink: #e7ecf5;
+      --ink-soft: #a7b3c6;
+      --ink-faint: #74839b;
+      --border: #2a3346;
+      --border-strong: #3a465e;
+      --accent: #7fa0e6;
+      --accent-ink: #dbe6fb;
+      --accent-soft: #1e2c4c;
+      --stamp: #e08c86;
+      --stamp-soft: #3a2325;
+      --amber: #e3bb70;
+      --amber-soft: #3a3220;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f131a;
+    --surface: #161c27;
+    --surface-alt: #1c2432;
+    --ink: #e7ecf5;
+    --ink-soft: #a7b3c6;
+    --ink-faint: #74839b;
+    --border: #2a3346;
+    --border-strong: #3a465e;
+    --accent: #7fa0e6;
+    --accent-ink: #dbe6fb;
+    --accent-soft: #1e2c4c;
+    --stamp: #e08c86;
+    --stamp-soft: #3a2325;
+    --amber: #e3bb70;
+    --amber-soft: #3a3220;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+  :root[data-theme="light"] {
+    --bg: #f2f5f9;
+    --surface: #ffffff;
+    --surface-alt: #eaeff6;
+    --ink: #1b2430;
+    --ink-soft: #4c5a6e;
+    --ink-faint: #7c8aa0;
+    --border: #d7dfea;
+    --border-strong: #b9c5d6;
+    --accent: #24488f;
+    --accent-ink: #17275a;
+    --accent-soft: #e2eaf9;
+    --stamp: #a92c28;
+    --stamp-soft: #fbebe9;
+    --amber: #8a6113;
+    --amber-soft: #fbf1dc;
+    --shadow: 0 1px 2px rgba(23, 39, 90, 0.06), 0 8px 24px rgba(23, 39, 90, 0.06);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic Medium", "Yu Gothic", "Meiryo", sans-serif;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic Medium", "Yu Gothic", "Meiryo", sans-serif;
+    font-weight: 600;
+    color: var(--ink);
+    text-wrap: balance;
+  }
+
+  a { color: var(--accent); }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    max-width: 1180px;
+    margin: 0 auto;
+    min-height: 100vh;
+  }
+
+  @media (max-width: 860px) {
+    .shell { grid-template-columns: 1fr; }
+  }
+
+  /* ---------- サイドナビ ---------- */
+
+  .toc {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 28px 18px 28px 24px;
+    border-right: 1px solid var(--border);
+    font-size: 13.5px;
+  }
+
+  @media (max-width: 860px) {
+    .toc {
+      position: static;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      padding: 18px 20px;
+    }
+    .toc ol { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+    .toc li { break-inside: avoid; }
+  }
+
+  .toc-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+
+  .toc-mark {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1.5px solid var(--stamp);
+    color: var(--stamp);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    flex-shrink: 0;
+    font-family: "Meiryo", "Yu Gothic", "MS Gothic", sans-serif;
+  }
+
+  .toc-brand-text {
+    font-size: 11.5px;
+    color: var(--ink-faint);
+    letter-spacing: 0.08em;
+  }
+
+  .toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: toc;
+  }
+
+  .toc li { counter-increment: toc; }
+
+  .toc a {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    padding: 6px 8px;
+    margin: 1px 0;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    text-decoration: none;
+  }
+
+  .toc a::before {
+    content: counter(toc, decimal-leading-zero);
+    font-variant-numeric: tabular-nums;
+    font-size: 11px;
+    color: var(--ink-faint);
+    flex-shrink: 0;
+  }
+
+  .toc a:hover { background: var(--surface-alt); color: var(--ink); }
+
+  /* ---------- メイン ---------- */
+
+  main { padding: 44px 40px 100px; min-width: 0; }
+
+  @media (max-width: 860px) { main { padding: 32px 20px 80px; } }
+
+  .doc-header { margin-bottom: 40px; }
+
+  .doc-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+
+  .doc-eyebrow::before {
+    content: "";
+    width: 18px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  .doc-header h1 {
+    font-size: 30px;
+    margin: 0 0 10px;
+    letter-spacing: 0.01em;
+  }
+
+  .doc-sub {
+    color: var(--ink-soft);
+    font-size: 15px;
+    max-width: 60ch;
+    margin: 0;
+  }
+
+  section { margin-bottom: 56px; scroll-margin-top: 24px; }
+
+  section h2 {
+    font-size: 20px;
+    margin: 0 0 6px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  section h2 .num {
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    font-family: inherit;
+    margin-right: 10px;
+  }
+
+  .lede {
+    color: var(--ink-soft);
+    font-size: 14.5px;
+    margin: 14px 0 20px;
+    max-width: 68ch;
+  }
+
+  h3 {
+    font-size: 15.5px;
+    margin: 26px 0 10px;
+    color: var(--ink);
+  }
+
+  p { max-width: 68ch; }
+
+  /* ---------- 画面マップ(モックアップ) ---------- */
+
+  .mockup {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 16px;
+    margin: 18px 0 8px;
+  }
+
+  .mockup-toolbar {
+    background: var(--accent-ink);
+    border-radius: 6px;
+    padding: 12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .mockup-toolbar .m-title {
+    color: #fff;
+    font-size: 12.5px;
+    opacity: 0.85;
+    width: 100%;
+    margin-bottom: 2px;
+  }
+
+  .m-btn {
+    font-size: 12px;
+    padding: 6px 11px;
+    border-radius: 4px;
+    background: #3a5ba8;
+    color: #fff;
+    white-space: nowrap;
+  }
+  .m-btn.alt { background: #4b5768; }
+  .m-btn.primary { background: #2563eb; }
+
+  .mockup-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  @media (max-width: 640px) { .mockup-grid { grid-template-columns: 1fr; } }
+
+  .m-field {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .m-field .m-legend {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+
+  .m-tag {
+    font-size: 9.5px;
+    font-weight: 500;
+    padding: 1px 6px;
+    border-radius: 3px;
+    letter-spacing: 0.02em;
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+
+  .m-line {
+    height: 7px;
+    border-radius: 2px;
+    background: var(--surface-alt);
+    margin: 5px 0;
+  }
+  .m-line.w60 { width: 60%; }
+  .m-line.w80 { width: 80%; }
+  .m-line.w40 { width: 40%; }
+
+  /* ---------- ワークフロー ---------- */
+
+  .flow {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+    margin-top: 16px;
+  }
+
+  .flow-step {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    border-bottom: 1px solid var(--border);
+  }
+  .flow-step:last-child { border-bottom: none; }
+
+  .flow-num {
+    background: var(--surface-alt);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 18px;
+    font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic Medium", "Yu Gothic", "Meiryo", sans-serif;
+    font-size: 15px;
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    border-right: 1px solid var(--border);
+  }
+
+  .flow-body { padding: 16px 20px; }
+
+  .flow-body h3 { margin: 0 0 6px; font-size: 14.5px; }
+  .flow-body p { margin: 0; font-size: 13.5px; color: var(--ink-soft); }
+  .flow-body .op { color: var(--ink); font-weight: 600; }
+
+  /* ---------- テーブル ---------- */
+
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 480px;
+    font-size: 13.5px;
+    background: var(--surface);
+  }
+
+  caption {
+    text-align: left;
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+  }
+
+  th, td {
+    text-align: left;
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  th {
+    font-size: 11.5px;
+    letter-spacing: 0.04em;
+    color: var(--ink-faint);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-strong);
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  code {
+    font-family: ui-monospace, "SFMono-Regular", Consolas, monospace;
+    background: var(--surface-alt);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.92em;
+    color: var(--ink);
+  }
+
+  /* ---------- コールアウト ---------- */
+
+  .note {
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 16px 0;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+  .note strong { color: var(--ink); }
+  .note.caution { border-left-color: var(--stamp); }
+  .note.caution strong { color: var(--stamp); }
+
+  /* ---------- 印影設定カード ---------- */
+
+  .stamp-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin: 18px 0;
+  }
+  @media (max-width: 640px) { .stamp-grid { grid-template-columns: 1fr; } }
+
+  .stamp-setting {
+    border: 1px dashed var(--border-strong);
+    border-radius: 8px;
+    padding: 14px 16px;
+    background: var(--surface);
+  }
+  .stamp-setting.is-primary { border-color: var(--stamp); background: var(--stamp-soft); }
+
+  .stamp-setting-label {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    margin: 0 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .stamp-setting.is-primary .stamp-setting-label { color: var(--stamp); }
+
+  .stamp-setting-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .stamp-setting-field {
+    flex: 1;
+    font-size: 11px;
+    color: var(--ink-faint);
+  }
+  .stamp-setting-field .sv {
+    display: block;
+    margin-top: 3px;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--surface-alt);
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .kbd-list { margin: 8px 0 0; padding-left: 20px; color: var(--ink-soft); font-size: 13.5px; }
+  .kbd-list li { margin-bottom: 4px; }
+
+  .em-red { color: var(--stamp); font-weight: 700; }
+
+  .faq dt { font-weight: 600; margin-top: 18px; color: var(--ink); font-size: 14px; }
+  .faq dt::before { content: "Q. "; color: var(--accent); }
+  .faq dd { margin: 6px 0 0; color: var(--ink-soft); font-size: 13.5px; max-width: 66ch; }
+  .faq dd::before { content: "A. "; color: var(--ink-faint); }
+
+  footer { border-top: 1px solid var(--border); padding-top: 18px; font-size: 12px; color: var(--ink-faint); }
+</style>
+
+<div class="shell">
+  <nav class="toc">
+    <div class="toc-brand">
+      <div class="toc-mark">雄電</div>
+      <div class="toc-brand-text">VENDOR QUOTE<br>MANUAL</div>
+    </div>
+    <ol>
+      <li><a href="#overview">アプリの概要</a></li>
+      <li><a href="#screen">画面の見方</a></li>
+      <li><a href="#workflow">基本操作の流れ</a></li>
+      <li><a href="#fields">入力できる項目</a></li>
+      <li><a href="#items">明細内容の入力</a></li>
+      <li><a href="#stamp">電子印(社判・担当者印)の設定</a></li>
+      <li><a href="#attachments">添付ファイルの追加</a></li>
+      <li><a href="#save">保存する</a></li>
+      <li><a href="#send">社員への送付</a></li>
+      <li><a href="#faq">注意事項・Q&amp;A</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="doc-header">
+      <div class="doc-eyebrow">OPERATION MANUAL</div>
+      <h1>業者用見積書アプリ操作マニュアル</h1>
+      <p class="doc-sub">雄電社様式・見積書入力アプリ(業者用)の使い方をまとめたドキュメントです。見積書の内容を入力し、電子印を押して、社内担当者へ送付するまでの流れを説明します。</p>
+    </header>
+
+    <section id="overview">
+      <h2><span class="num">01</span>アプリの概要</h2>
+      <p class="lede">このアプリはブラウザだけで動作するオフラインツールです。協力会社(業者)が見積書の内容を入力し、社内担当者へ送るためのデータ(JSONファイル)を作成します。作成したファイルを社員用見積書アプリで開くと、印刷可能な見積書として表示されます。サーバーへの送信は行われず、すべての処理は開いているブラウザ内で完結します。</p>
+      <div class="note">
+        <strong>社員用アプリとの違い</strong> — 社員用アプリでは「工事情報」以外は閲覧のみですが、業者用アプリでは<strong>すべての項目を入力・編集できます</strong>。工事情報に加え、業者(自社)情報・明細内容・法定福利費・註記・添付ファイル・電子印(社判/担当者印)を、このアプリで入力します。
+      </div>
+    </section>
+
+    <section id="screen">
+      <h2><span class="num">02</span>画面の見方</h2>
+      <p class="lede">画面はツールバーと入力パネルで構成されています。社員用アプリと違い、どの項目にも閲覧のみバッジは付いていません。</p>
+
+      <div class="mockup">
+        <div class="mockup-toolbar">
+          <div class="m-title">見積書入力アプリ(雄電社様式)</div>
+          <span class="m-btn alt">新規作成</span>
+          <span class="m-btn primary">保存</span>
+          <span class="m-btn primary">ファイルに保存</span>
+          <span class="m-btn alt">ファイルを開く</span>
+          <span class="m-btn alt">プレビュー</span>
+        </div>
+        <div class="mockup-grid">
+          <div class="m-field">
+            <div class="m-legend">工事情報 <span class="m-tag">編集可</span></div>
+            <div class="m-line w80"></div><div class="m-line w60"></div><div class="m-line w40"></div>
+          </div>
+          <div class="m-field">
+            <div class="m-legend">業者(自社)情報+電子印 <span class="m-tag">編集可</span></div>
+            <div class="m-line w80"></div><div class="m-line w60"></div><div class="m-line w40"></div>
+          </div>
+          <div class="m-field">
+            <div class="m-legend">明細内容 <span class="m-tag">編集可</span></div>
+            <div class="m-line w80"></div><div class="m-line w60"></div><div class="m-line w40"></div>
+          </div>
+          <div class="m-field">
+            <div class="m-legend">法定福利費・註記 <span class="m-tag">編集可</span></div>
+            <div class="m-line w60"></div><div class="m-line w40"></div>
+          </div>
+          <div class="m-field">
+            <div class="m-legend">添付ファイル(別紙) <span class="m-tag">編集可</span></div>
+            <div class="m-line w60"></div><div class="m-line w40"></div>
+          </div>
+        </div>
+      </div>
+      <p class="lede" style="margin-top:10px; font-size:12.5px;">※実際の入力フォームを簡略化した図です。各枠の位置関係は実物と同じです。</p>
+    </section>
+
+    <section id="workflow">
+      <h2><span class="num">03</span>基本操作の流れ</h2>
+      <p class="lede">新しい見積書を作成してから社員へ送付するまでの標準的な手順です。</p>
+
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-num">1</div>
+          <div class="flow-body">
+            <h3>アプリを開く、または新規作成する</h3>
+            <p>アプリを開くと、前回入力していた内容(ブラウザ内に保存された下書き)が自動的に復元されます。まったく新しい見積書を作る場合は<span class="op">「新規作成」</span>を押します。住所・社名・電話・業者コード・電子印(社判・担当者印)は維持されたまま、それ以外の項目がクリアされます。</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">2</div>
+          <div class="flow-body">
+            <h3>工事情報・業者(自社)情報を入力する</h3>
+            <p>事業所、工番、工事名、施工場所、工期、見積有効期限、業者見積日・見積番号、住所、社名、電話、業者コードを入力します。</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">3</div>
+          <div class="flow-body">
+            <h3>明細内容を入力する</h3>
+            <p>品名・仕様、数量、単位、単価、備考を入力します。金額は数量×単価で自動計算されます。</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">4</div>
+          <div class="flow-body">
+            <h3>法定福利費・註記を入力する</h3>
+            <p>必要に応じて法定福利費と特記事項(註記)を入力します。</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">5</div>
+          <div class="flow-body">
+            <h3>電子印(社判・担当者印)を設定する</h3>
+            <p>社判・担当者印の画像を登録し、位置とサイズを調整します。</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">6</div>
+          <div class="flow-body">
+            <h3>添付ファイルを追加する</h3>
+            <p>必要であれば別紙(画像・PDF)を添付します。</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">7</div>
+          <div class="flow-body">
+            <h3>プレビューで確認する</h3>
+            <p><span class="op">「プレビュー」</span>を押すと印刷イメージが表示されます。電子印の位置はこの画面上でドラッグして微調整することもできます。</p>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-num">8</div>
+          <div class="flow-body">
+            <h3>ファイルに保存して社員へ送付する</h3>
+            <p><span class="op">「ファイルに保存」</span>でJSONファイルを書き出し、社内担当者へ送付します(詳細は各章を参照)。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="fields">
+      <h2><span class="num">04</span>入力できる項目</h2>
+      <p class="lede">工事情報から電子印まで、すべての項目をこのアプリで入力します。</p>
+
+      <div class="table-wrap">
+        <table>
+          <caption>工事情報</caption>
+          <thead><tr><th>項目</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td>事業所(本支店区分)</td><td>本店(010)/東関東支店(020)/横浜支店(030)/大阪支店(040)/名古屋支店(050)/仙台支店(060)/北関東支店(090)から選択</td></tr>
+            <tr><td>工番</td><td>例: 26-0000 / 26-0000A</td></tr>
+            <tr><td>工事名・施工場所</td><td>自由入力</td></tr>
+            <tr><td>工期(開始・終了)</td><td>日付選択</td></tr>
+            <tr><td>見積有効期限</td><td>見積日からの日数</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <caption>業者(自社)情報</caption>
+          <thead><tr><th>項目</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td>業者見積日</td><td>日付選択(初期値は当日)</td></tr>
+            <tr><td>業者見積番号</td><td>第◯号、の◯部分</td></tr>
+            <tr><td>住所・社名・電話</td><td>自由入力</td></tr>
+            <tr><td>業者コード</td><td>5桁以内</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <caption>明細・その他</caption>
+          <thead><tr><th>項目</th><th>内容</th></tr></thead>
+          <tbody>
+            <tr><td>明細内容</td><td>品名・仕様/数量/単位/単価/備考。金額は自動計算</td></tr>
+            <tr><td>法定福利費</td><td>内訳・税抜見積総額に含まれる金額</td></tr>
+            <tr><td>註記</td><td>特記事項など。最大4行まで(5行目以降は自動的に削られます)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="items">
+      <h2><span class="num">05</span>明細内容の入力</h2>
+      <p class="lede">「明細内容」の表に、品名・仕様、数量、単位、単価、備考を直接入力します。金額欄は数量×単価で自動的に計算され、入力の必要はありません。</p>
+      <ul class="kbd-list">
+        <li>入力できる行数は9行までです(行を追加するボタンは現在非表示になっており、使用できません)。</li>
+        <li>9行で収まらない場合は、品名欄に「別紙参照」と記載し、明細の詳細を別紙として添付ファイルに追加してください。</li>
+        <li>単価は小数点第2位まで、金額は最大9億9,999万9,999円まで入力できます。</li>
+      </ul>
+      <div class="note">
+        <strong>合計金額は自動計算されます。</strong> 入力した明細の金額を自動で合計し、見積書右上の数字枠(桁ごとのマス目)にも同時に反映されます。
+      </div>
+    </section>
+
+    <section id="stamp">
+      <h2><span class="num">06</span>電子印(社判・担当者印)の設定</h2>
+      <p class="lede">「業者(自社)情報」欄の下部で、社判1つと担当者印3つ(担当者印①②③)を個別に登録できます。画像はPNG(透過背景)推奨です。</p>
+
+      <div class="stamp-grid">
+        <div class="stamp-setting is-primary">
+          <p class="stamp-setting-label">🔴 社判</p>
+          <div class="stamp-setting-row">
+            <span class="stamp-setting-field">X<span class="sv">1480</span></span>
+            <span class="stamp-setting-field">Y<span class="sv">300</span></span>
+            <span class="stamp-setting-field">サイズ<span class="sv">110</span></span>
+          </div>
+        </div>
+        <div class="stamp-setting">
+          <p class="stamp-setting-label">担当者印①</p>
+          <div class="stamp-setting-row">
+            <span class="stamp-setting-field">X<span class="sv">1480</span></span>
+            <span class="stamp-setting-field">Y<span class="sv">535</span></span>
+            <span class="stamp-setting-field">サイズ<span class="sv">50</span></span>
+          </div>
+        </div>
+        <div class="stamp-setting">
+          <p class="stamp-setting-label">担当者印②</p>
+          <div class="stamp-setting-row">
+            <span class="stamp-setting-field">X<span class="sv">1360</span></span>
+            <span class="stamp-setting-field">Y<span class="sv">535</span></span>
+            <span class="stamp-setting-field">サイズ<span class="sv">50</span></span>
+          </div>
+        </div>
+        <div class="stamp-setting">
+          <p class="stamp-setting-label">担当者印③</p>
+          <div class="stamp-setting-row">
+            <span class="stamp-setting-field">X<span class="sv">1240</span></span>
+            <span class="stamp-setting-field">Y<span class="sv">535</span></span>
+            <span class="stamp-setting-field">サイズ<span class="sv">50</span></span>
+          </div>
+        </div>
+      </div>
+      <p class="lede" style="margin-top:-6px; font-size:12.5px;">数値は初期値です。X・Y・サイズは自由に変更できます。</p>
+
+      <h3>登録方法</h3>
+      <ul class="kbd-list">
+        <li>各欄の「画像」からPNGまたはJPGファイルを選択すると、その印影が見積書に反映されます。</li>
+        <li>位置は数値(X・Y)を直接入力するか、<span class="em-red">「プレビュー」で開いた印刷プレビューの1ページ目の上で印影をマウスでドラッグして移動できます</span>(ドラッグ中の位置は数値欄にも自動反映されます)。</li>
+        <li>サイズは20〜400の範囲で数値入力します。</li>
+        <li>不要になった印影は各欄の「削除」ボタンで消去できます。</li>
+      </ul>
+      <div class="note">
+        <strong>「新規作成」を押しても電子印は消えません。</strong> 住所・社名・電話・業者コードと同様、電子印は自社情報として維持され、次の見積書でもそのまま使えます。
+      </div>
+    </section>
+
+    <section id="attachments">
+      <h2><span class="num">07</span>添付ファイルの追加</h2>
+      <p class="lede">「添付ファイル(別紙)」欄で、画像とPDFを追加できます。ボタンは画像用とPDF用に分かれています。</p>
+      <ul class="kbd-list">
+        <li><span class="op">「画像を添付」</span>: 複数枚まとめて選択できます。縦向きの画像は自動的に横向き(A4横相当)に回転して印刷に出力されます。</li>
+        <li><span class="op">「PDFを添付」</span>: 複数ファイルをまとめて選択できます。PDFは見積書本体の印刷には含まれないため、一覧の「開く」ボタンで別ウィンドウ表示して内容を確認してください。</li>
+        <li>追加した添付ファイルは一覧の「削除」ボタンでいつでも取り消せます。</li>
+      </ul>
+    </section>
+
+    <section id="save">
+      <h2><span class="num">08</span>保存する</h2>
+      <p class="lede">保存には2種類あります。用途に応じて使い分けてください。</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ボタン</th><th>保存先</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td><span class="op">保存</span></td><td>このブラウザの中(下書き)</td><td>作業の一時保存。次にアプリを開いたときに自動で内容が復元されます。他の人には渡せません。</td></tr>
+            <tr><td><span class="op">ファイルに保存</span></td><td>任意のフォルダ(.jsonファイル)</td><td>社員へ送付するためのファイルを作成します。ファイル名は「見積書_社名_第◯号.json」の形式で自動的に提案されます。</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <strong>入力するたびに自動でブラウザ内に保存されます。</strong> 「保存」ボタンを押さなくても、フォームに入力するたびに下書きが自動更新されます。ただし、これはこのブラウザ・この端末だけに保存される一時的なものです。社員へ渡すファイルは必ず<strong>「ファイルに保存」</strong>で作成してください。
+      </div>
+    </section>
+
+    <section id="send">
+      <h2><span class="num">09</span>社員への送付</h2>
+      <p class="lede">「ファイルに保存」で作成したJSONファイルの送り方は、電子印の有無によって異なります。アプリからの自動送信機能はないため、いずれも手動での対応になります。</p>
+      <ul class="kbd-list">
+        <li><strong>電子印が押印されている場合</strong> — 保存した「.json」ファイルを、社内担当者宛のメールに添付して送ってください。</li>
+        <li><strong>電子印がない場合</strong> — <span class="op">「プレビュー」</span>→<span class="op">「印刷実行」</span>で紙に印刷し、押印のうえ郵送してください。</li>
+      </ul>
+    </section>
+
+    <section id="faq">
+      <h2><span class="num">10</span>注意事項・Q&amp;A</h2>
+      <dl class="faq">
+        <dt>ブラウザを閉じても大丈夫ですか?</dt>
+        <dd>入力内容は自動的にこのブラウザ内へ保存されるため、同じ端末・同じブラウザで再度開けば続きから入力できます。ただし別の端末やブラウザには引き継がれないため、社員へ送付する前提のデータは必ず「ファイルに保存」でファイル化してバックアップしてください。</dd>
+
+        <dt>「新規作成」を押すと何が消えますか?</dt>
+        <dd>工事情報・明細内容・法定福利費・註記・添付ファイルなど、案件ごとに異なる項目はすべて消去されます。住所・社名・電話・業者コード・電子印(社判/担当者印)は自社の固定情報として維持されます。</dd>
+
+        <dt>「ファイルに保存」を押しても何も起きません。</dt>
+        <dd>ご利用のブラウザによっては、保存先を選ぶ画面ではなく、ファイル名を確認するポップアップが表示され、そのままダウンロードフォルダに保存される場合があります。Google ChromeまたはMicrosoft Edgeでの利用を推奨します。</dd>
+
+        <dt>明細が9行に収まりません。</dt>
+        <dd>品名欄に「別紙参照」と記載し、明細の詳細を記載した別紙(画像またはPDF)を添付ファイルとして追加してください。</dd>
+
+        <dt>電子印の画像はどんな形式がよいですか?</dt>
+        <dd>背景が透過されたPNG形式を推奨します。JPGでも登録できますが、背景が白いまま印影の外側まで四角く表示されます。</dd>
+
+        <dt>印刷すると2ページ出力されるのはなぜですか?</dt>
+        <dd>仕様により、色違いの2種類のページ(青/赤)が自動的に1ページ目・2ページ目として出力されます。誤って印刷されたわけではありません。</dd>
+      </dl>
+    </section>
+
+    <footer>
+      見積書入力アプリ(雄電社様式・業者用)操作マニュアル
+    </footer>
+  </main>
+</div>

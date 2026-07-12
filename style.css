@@ -1,0 +1,610 @@
+* { box-sizing: border-box; }
+
+body {
+  font-family: "Hiragino Sans", "Yu Gothic", "Meiryo", sans-serif;
+  margin: 0;
+  background: #f3f4f6;
+  color: #1f2937;
+}
+
+.toolbar {
+  background: #1f2937;
+  color: white;
+  padding: 12px 20px;
+}
+
+.toolbar h1 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+}
+
+.toolbar-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-buttons button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  background: #2563eb;
+  color: white;
+}
+
+.toolbar-buttons button:hover {
+  background: #1d4ed8;
+}
+
+#btnNew {
+  background: #6b7280 !important;
+}
+#btnNew:hover {
+  background: #4b5563 !important;
+}
+
+#btnMail {
+  background: #059669 !important;
+}
+#btnMail:hover {
+  background: #047857 !important;
+}
+
+.theme-select {
+  margin-left: auto;
+  font-size: 13px;
+  color: #d1d5db;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.theme-select select {
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: none;
+}
+
+.hint {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  color: #d1d5db;
+}
+
+.hint.hint-notice {
+  color: #fcd34d;
+}
+
+.layout {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  align-items: flex-start;
+}
+
+.form-panel {
+  flex: 1;
+  max-width: 1400px;
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  max-height: calc(100vh - 140px);
+  overflow-y: auto;
+}
+
+.info-columns {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.info-columns > fieldset {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+fieldset {
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+legend {
+  font-weight: bold;
+  color: #374151;
+  padding: 0 6px;
+}
+
+.form-panel label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 10px;
+  color: #374151;
+}
+
+.form-hint {
+  margin: -4px 0 10px 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.form-hint-spaced {
+  margin-top: 8px;
+}
+
+.form-panel input,
+.form-panel select,
+.form-panel textarea {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.two-col {
+  display: flex;
+  gap: 8px;
+}
+.two-col label {
+  flex: 1;
+}
+
+.items-input-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.items-input-table th {
+  text-align: left;
+  font-size: 11px;
+  color: #6b7280;
+  padding: 2px 5px;
+}
+
+.items-input-table td {
+  padding: 3px 5px;
+}
+
+.items-input-table input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 5px 6px;
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+}
+
+.items-input-table .col-name { width: 67%; }
+.items-input-table .col-qty { width: 4%; }
+.items-input-table .col-unit { width: 4%; }
+.items-input-table .col-price { width: 6%; }
+.items-input-table .col-amount { width: 10%; }
+.items-input-table .col-remarks { width: 9%; }
+
+.items-input-table .item-amount {
+  display: block;
+  text-align: right;
+  padding: 5px 6px;
+  font-size: 13px;
+  color: #374151;
+}
+
+.items-input-table tr.total-row td {
+  font-weight: bold;
+  border-top: 2px solid #9ca3af;
+}
+
+.items-input-table .total-label {
+  display: block;
+  text-align: right;
+  padding: 5px 6px;
+  font-size: 13px;
+}
+.items-input-table .total-hint {
+  display: block;
+  font-size: 11px;
+  font-weight: normal;
+  color: #6b7280;
+  padding: 4px 6px;
+  line-height: 1.4;
+}
+
+#btnAddItem,
+#btnRemoveStamp,
+#btnRemoveStamp2,
+#btnRemoveStamp3,
+#btnRemoveStamp4 {
+  padding: 6px 10px;
+  border: 1px solid #2563eb;
+  color: #2563eb;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.stamp-columns {
+  display: flex;
+  flex-direction: row-reverse;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.stamp-section {
+  flex: 1;
+  border: 1px dashed #d1d5db;
+  border-radius: 4px;
+  padding: 8px 10px 4px;
+  margin-bottom: 0;
+}
+
+.stamp-section-label {
+  margin: 0 0 6px 0;
+  font-size: 12px;
+  font-weight: bold;
+  color: #6b7280;
+}
+
+.ov-stamp {
+  position: absolute;
+  cursor: move;
+  user-select: none;
+}
+
+/* ===== 添付ファイル ===== */
+
+.attachment-add-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #374151;
+}
+
+#btnAddAttachment {
+  padding: 6px 12px;
+  border: 1px solid #2563eb;
+  color: #2563eb;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.attachment-list {
+  list-style: none;
+  margin: 0 0 4px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.attachment-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #374151;
+}
+
+.attachment-pdf-note {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 3px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.attachment-thumb {
+  width: 32px;
+  height: 32px;
+  object-fit: cover;
+  border-radius: 2px;
+  border: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.btn-open-attachment {
+  padding: 2px 8px;
+  border: 1px solid #2563eb;
+  color: #2563eb;
+  background: white;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.btn-remove-attachment {
+  padding: 2px 8px;
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  background: white;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.attachment-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  page-break-before: always;
+}
+
+.attachment-page img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.attachment-page embed {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ===== 印刷ソース: 通常は非表示、window.print()で出力 ===== */
+
+.print-source {
+  display: none;
+}
+
+/* ===== 見積書本体: 実物PDF画像の上に入力値を転記 ===== */
+
+.quote-page {
+  position: relative;
+  width: 297mm;
+  height: 210mm;
+  flex-shrink: 0;
+  background: white;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.15);
+  overflow: hidden;
+  zoom: 0.6; /* 画面表示のみ縮小(印刷時は@media printで1に戻す) */
+}
+
+.bg-image {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 297mm;
+  height: 210mm;
+  display: block;
+}
+
+.overlay-layer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 297mm;
+  height: 210mm;
+}
+
+.ov {
+  position: absolute;
+  font-family: "MS Gothic", "Yu Gothic", "Hiragino Sans", sans-serif;
+  font-size: 4.11mm; /* 基本サイズ(3.4mm≈9.6pt)+2pt */
+  line-height: 1;
+  color: #000;
+  white-space: nowrap;
+}
+
+.ov.ov-digit {
+  text-align: right;
+  font-weight: bold;
+  font-size: 4.46mm;
+}
+
+.ov.ov-notes {
+  white-space: pre-wrap;
+}
+
+.ov.ov-price,
+.ov.ov-amount {
+  letter-spacing: 6.5pt;
+}
+
+.print-only {
+  display: none;
+}
+
+/* ===== 印刷プレビューモーダル ===== */
+
+.preview-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 24px 16px;
+}
+
+.preview-modal-inner {
+  background: #f3f4f6;
+  border-radius: 10px;
+  padding: 20px;
+  width: fit-content;
+  max-width: calc(100vw - 32px);
+}
+
+.preview-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.preview-modal-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.preview-modal-label {
+  margin: 12px 0 6px 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.preview-modal-body {
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-modal-mail-hint {
+  margin: 16px 0 0 0;
+  padding: 10px 14px;
+  background: #ecfdf5;
+  border: 1px solid #6ee7b7;
+  border-radius: 6px;
+  color: #065f46;
+  font-size: 13px;
+  text-align: center;
+}
+
+.preview-modal-footer {
+  margin-top: 16px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.preview-modal-footer button {
+  padding: 10px 28px;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+}
+
+#btnPrintFromPreview {
+  background: #2563eb;
+  color: white;
+}
+#btnPrintFromPreview:hover {
+  background: #1d4ed8;
+}
+
+.btn-modal-close {
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db !important;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+}
+.btn-modal-close:hover {
+  background: #f9fafb;
+}
+
+/* ===== 社員用アプリ: 閲覧専用フィールドの表示 ===== */
+
+.employee-app .readonly-badge {
+  font-size: 11px;
+  font-weight: normal;
+  color: #6b7280;
+  background: #f3f4f6;
+  border-radius: 3px;
+  padding: 1px 6px;
+  margin-left: 6px;
+}
+
+.employee-app input:disabled,
+.employee-app select:disabled,
+.employee-app textarea:disabled {
+  background: #f3f4f6;
+  color: #111827;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.employee-app .ov-stamp-readonly {
+  cursor: default;
+}
+
+.employee-app .attachment-empty {
+  color: #9ca3af;
+  font-style: italic;
+  justify-content: center;
+}
+
+.btn-view-attachment {
+  padding: 2px 8px;
+  border: 1px solid #2563eb;
+  color: #2563eb;
+  background: white;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.attachment-view-inner {
+  width: 85vw;
+}
+
+.attachment-view-image {
+  display: block;
+  max-width: 100%;
+  max-height: 80vh;
+  margin: 0 auto;
+}
+
+.attachment-view-frame {
+  width: 100%;
+  height: 80vh;
+  border: none;
+}
+
+.attachment-view-fallback {
+  margin: 8px 0 0 0;
+  font-size: 13px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.attachment-view-fallback a {
+  color: #2563eb;
+}
+
+@media print {
+  @page { size: A4 landscape; margin: 0; }
+  .no-print { display: none !important; }
+  .layout { display: none; }
+  .print-source { display: block; }
+  .quote-page { box-shadow: none; margin: 0; zoom: 1; }
+  body { background: white; }
+  .print-only { display: block; }
+  #printAreaAlt { page-break-before: always; }
+}
