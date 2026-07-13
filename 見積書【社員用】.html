@@ -52,7 +52,6 @@
           <label>工期(開始) <input type="date" id="periodStart"></label>
           <label>工期(終了) <input type="date" id="periodEnd"></label>
         </div>
-        <label>見積有効期限(見積日より) <input type="number" id="validDays" min="0" placeholder="日間"></label>
       </fieldset>
 
       <fieldset>
@@ -67,6 +66,7 @@
           <label>電話 <input type="text" id="vendorTel" disabled></label>
           <label>業者コード <input type="text" id="vendorCode" maxlength="5" disabled></label>
         </div>
+        <label>見積有効期限(見積日より) <input type="number" id="validDays" min="0" placeholder="日間" disabled></label>
         <p class="form-hint">電子印(社判・担当者印)は業者側で設定された内容がそのまま印刷に反映されます。</p>
         <!-- 印影の位置調整はJSロジック用の非表示フィールドとして保持(社員側では編集UIなし) -->
         <input type="hidden" id="stampX" value="1480">
