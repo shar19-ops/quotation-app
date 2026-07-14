@@ -18,6 +18,13 @@ body {
   font-size: 18px;
 }
 
+.app-version {
+  font-size: 12px;
+  font-weight: normal;
+  color: #9ca3af;
+  margin-left: 8px;
+}
+
 .toolbar-buttons {
   display: flex;
   align-items: center;

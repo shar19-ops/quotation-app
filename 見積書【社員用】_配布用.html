@@ -26,6 +26,13 @@ body {
   font-size: 18px;
 }
 
+.app-version {
+  font-size: 12px;
+  font-weight: normal;
+  color: #9ca3af;
+  margin-left: 8px;
+}
+
 .toolbar-buttons {
   display: flex;
   align-items: center;
@@ -622,7 +629,7 @@ legend {
 <body class="employee-app">
 
 <div class="toolbar no-print">
-  <h1>社員用見積書アプリ(雄電社様式)</h1>
+  <h1>社員用見積書アプリ(雄電社様式) <span class="app-version">v2026.07.14</span></h1>
   <div class="toolbar-buttons">
     <button id="btnOpenFile">ファイルを開く</button>
     <input type="file" id="fileInput" accept="application/json" style="display:none">
