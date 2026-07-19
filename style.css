@@ -397,6 +397,18 @@ legend {
   white-space: nowrap;
 }
 
+.attachment-pdf-note-pending {
+  color: #6b7280;
+  background: #f3f4f6;
+  border-color: #e5e7eb;
+}
+
+.attachment-pdf-note-ok {
+  color: #065f46;
+  background: #ecfdf5;
+  border-color: #6ee7b7;
+}
+
 .attachment-thumb {
   width: 32px;
   height: 32px;

@@ -413,16 +413,86 @@ function rotateImageToLandscape(dataUrl, callback) {
   img.src = dataUrl;
 }
 
+function rotateImageToLandscapeAsync(dataUrl) {
+  return new Promise(resolve => rotateImageToLandscape(dataUrl, resolve));
+}
+
+// ===== PDF添付をページ画像化(pdf.js) =====
+// プレビュー・印刷に画像と同じ扱いで含めるため、添付時に各ページをPNGへ事前レンダリングしておく。
+
+const PDF_RENDER_DPI = 150; // 他の座標系(150dpi基準px)と揃える
+
+function setupPdfWorker() {
+  if (typeof pdfjsLib === "undefined") return;
+  const dataEl = document.getElementById("pdfWorkerB64");
+  const b64 = dataEl ? dataEl.textContent.trim() : "";
+  if (b64) {
+    // 配布用(単一HTML)バンドル: base64埋め込みのworkerコードをBlob化して使う
+    const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+    const blob = new Blob([bytes], { type: "text/javascript" });
+    pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(blob);
+  } else {
+    // 開発版: 相対パスのファイルをそのまま使う
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "pdfjs/pdf.worker.min.js";
+  }
+}
+
+// PDFの各ページをPNG dataURLの配列にレンダリングする。失敗時は空配列を返す(呼び出し側でフォールバック表示)。
+async function renderPdfPagesToImages(pdfDataUrl) {
+  if (typeof pdfjsLib === "undefined") return [];
+  try {
+    const pdf = await pdfjsLib.getDocument({ url: pdfDataUrl }).promise;
+    const images = [];
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale: PDF_RENDER_DPI / 72 });
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(viewport.width);
+      canvas.height = Math.round(viewport.height);
+      await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+      images.push(await rotateImageToLandscapeAsync(canvas.toDataURL("image/png")));
+    }
+    return images;
+  } catch (err) {
+    console.error("PDFのページ変換に失敗しました:", err);
+    return [];
+  }
+}
+
+// 添付一覧のうち、まだページ画像化されていないPDF(古い保存データ・pdf.js未対応環境等)を
+// バックグラウンドで変換する。完了したものから順次一覧・プレビューへ反映する。
+function backfillPdfPages() {
+  attachments.forEach(att => {
+    if (att.type !== "application/pdf" || Array.isArray(att.pages)) return;
+    renderPdfPagesToImages(att.dataUrl).then(pages => {
+      att.pages = pages;
+      renderAttachmentList();
+      renderPreview();
+      saveDraft();
+    });
+  });
+}
+
 function buildAttachmentPages(container) {
   container.querySelectorAll(".attachment-page").forEach(el => el.remove());
   attachments.forEach(att => {
-    if (!att.type.startsWith("image/")) return; // PDF は印刷対象外
-    const page = document.createElement("div");
-    page.className = "quote-page attachment-page";
-    const img = document.createElement("img");
-    img.src = att.dataUrl;
-    page.appendChild(img);
-    container.appendChild(page);
+    if (att.type.startsWith("image/")) {
+      const page = document.createElement("div");
+      page.className = "quote-page attachment-page";
+      const img = document.createElement("img");
+      img.src = att.dataUrl;
+      page.appendChild(img);
+      container.appendChild(page);
+    } else if (att.type === "application/pdf" && Array.isArray(att.pages)) {
+      att.pages.forEach(pageDataUrl => {
+        const page = document.createElement("div");
+        page.className = "quote-page attachment-page";
+        const img = document.createElement("img");
+        img.src = pageDataUrl;
+        page.appendChild(img);
+        container.appendChild(page);
+      });
+    }
   });
 }
 
@@ -439,7 +509,17 @@ function renderAttachmentList() {
     const openBtn = !isImage
       ? `<button class="btn-open-attachment" data-idx="${idx}">開く</button>`
       : "";
-    li.innerHTML = `${thumb}<span class="attachment-name">${att.name}</span>${openBtn}<button class="btn-remove-attachment" data-idx="${idx}">削除</button>`;
+    let pdfNote = "";
+    if (!isImage) {
+      if (!Array.isArray(att.pages)) {
+        pdfNote = `<span class="attachment-pdf-note attachment-pdf-note-pending">変換中…</span>`;
+      } else if (att.pages.length === 0) {
+        pdfNote = `<span class="attachment-pdf-note attachment-pdf-note-warn">変換失敗・「開く」で個別に確認してください</span>`;
+      } else {
+        pdfNote = `<span class="attachment-pdf-note attachment-pdf-note-ok">${att.pages.length}ページ・印刷に自動反映</span>`;
+      }
+    }
+    li.innerHTML = `${thumb}<span class="attachment-name">${att.name}</span>${pdfNote}${openBtn}<button class="btn-remove-attachment" data-idx="${idx}">削除</button>`;
     ul.appendChild(li);
   });
   ul.querySelectorAll(".btn-open-attachment").forEach(btn => {
@@ -537,6 +617,7 @@ function applyLoadedData(data) {
   renderAttachmentList();
   renderPreview();
   saveDraft();
+  backfillPdfPages(); // 古い保存データにpdf.jsページ変換結果が無ければ補完する
 }
 
 async function openFromFile() {
@@ -579,6 +660,7 @@ function loadDraft() {
   renderItemsInput();
   renderAttachmentList();
   renderPreview();
+  backfillPdfPages(); // 古い保存データにpdf.jsページ変換結果が無ければ補完する
 }
 
 function todayIso() {
@@ -827,6 +909,7 @@ function downloadCsvTemplate() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  setupPdfWorker();
   loadDraft();
 
   document.getElementById("btnAddAttachment").addEventListener("click", () => {
@@ -862,9 +945,16 @@ document.addEventListener("DOMContentLoaded", () => {
     files.forEach(file => {
       const reader = new FileReader();
       reader.onload = () => {
-        attachments.push({ name: file.name, type: file.type, dataUrl: reader.result });
+        const att = { name: file.name, type: file.type, dataUrl: reader.result, pages: null };
+        attachments.push(att);
         pending--;
         if (pending === 0) { renderAttachmentList(); saveDraft(); }
+        renderPdfPagesToImages(att.dataUrl).then(pages => {
+          att.pages = pages;
+          renderAttachmentList();
+          renderPreview();
+          saveDraft();
+        });
       };
       reader.readAsDataURL(file);
     });

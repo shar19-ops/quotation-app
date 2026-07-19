@@ -148,7 +148,7 @@
         <button type="button" id="btnAddPdfAttachment">PDFを添付</button>
       </div>
       <ul id="attachmentList" class="attachment-list"></ul>
-      <p class="form-hint">画像(PNG/JPG)はA4横に自動回転して印刷出力されます。PDFは印刷対象外・「開く」ボタンで別ウィンドウ表示。</p>
+      <p class="form-hint">画像(PNG/JPG)・PDFともにA4横に自動回転してプレビュー・印刷に含まれます(PDFは全ページ出力)。「開く」ボタンで別ウィンドウ表示も可能です。</p>
     </fieldset>
   </section>
 </div>
@@ -219,6 +219,11 @@
 <img id="bgBlueSrc" src="assets/blue_bg.png" style="display:none" alt="">
 <img id="bgRedSrc"  src="assets/red_bg.png"  style="display:none" alt="">
 
+<!-- PDF.js workerのbase64データ置き場: 開発版は空(JSが相対パスpdfjs/pdf.worker.min.jsを使用)。
+     配布用ビルド時にテキストを埋め込み、JSがBlob化して使う(単一HTML化のため) -->
+<script id="pdfWorkerB64" type="text/plain" style="display:none"></script>
+
+<script src="pdfjs/pdf.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
