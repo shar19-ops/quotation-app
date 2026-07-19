@@ -603,6 +603,90 @@ async function saveToFile() {
   URL.revokeObjectURL(url);
 }
 
+// ===== 社内回送用HTML保存 =====
+// 業者が保存するJSONは受け取った側もこのアプリが無いと開けず不便なため、
+// 現在の入力内容を埋め込んだ「このアプリ自体のコピー」を1つのHTMLファイルとして書き出す。
+// 配布用(単一HTML化)バージョンで開いている場合のみ動作する(開発版はstyle.css/script.js等が
+// 別ファイル参照のままのため、自己完結なコピーにならない)。
+
+function isBundledSingleFile() {
+  return !document.querySelector('link[rel="stylesheet"][href="style.css"]');
+}
+
+function suggestedInternalHtmlFileName() {
+  return suggestedFileName().replace(/\.json$/, "") + "_社内確認用.html";
+}
+
+// 単一HTML化ビルドと同じ理由(埋め込みJSON内に "</script" が含まれるとタグが途中で
+// 閉じてしまいページが壊れる)で、埋め込む前に必ずエスケープする。
+function escapeScriptCloseText(text) {
+  return text.replace(/<\/script/gi, "<\\/script");
+}
+
+function buildInternalForwardHtml() {
+  closePrintPreview();
+  closeCsvImportModal();
+  const data = collectFormData();
+  data.items = items;
+  const json = escapeScriptCloseText(JSON.stringify(data));
+
+  const clone = document.documentElement.cloneNode(true);
+  // 動的に書き換わる要素は空にしておく(bootstrapのapplyLoadedData()実行時に再構築される)
+  clone.querySelectorAll("#overlayLayer, #overlayLayerAlt, #previewLayerA, #previewLayerB, #itemsInputBody, #attachmentList, #csvImportBody")
+    .forEach(el => { el.innerHTML = ""; });
+  const previewModalEl = clone.querySelector("#previewModal");
+  if (previewModalEl) previewModalEl.style.display = "none";
+  const csvModalEl = clone.querySelector("#csvImportModal");
+  if (csvModalEl) csvModalEl.style.display = "none";
+  clone.querySelectorAll('input[type="file"]').forEach(el => el.removeAttribute("value"));
+
+  const bootstrap = document.createElement("script");
+  bootstrap.textContent =
+    'document.addEventListener("DOMContentLoaded", function () {\n' +
+    '  if (typeof applyLoadedData === "function") {\n' +
+    '    applyLoadedData(' + json + ');\n' +
+    '  }\n' +
+    '});';
+  clone.querySelector("body").appendChild(bootstrap);
+
+  return "<!DOCTYPE html>\n" + clone.outerHTML;
+}
+
+async function saveToInternalHtml() {
+  if (!isBundledSingleFile()) {
+    alert("この機能は配布用(単一HTML)ファイルでのみ利用できます。開発版では使用できません。");
+    return;
+  }
+  saveDraft();
+  const htmlText = buildInternalForwardHtml();
+  const fileName = suggestedInternalHtmlFileName();
+
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: fileName,
+        types: [{ description: "見積書(社内回送用HTML)", accept: { "text/html": [".html"] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(htmlText);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== "AbortError") alert("保存に失敗しました: " + err.message);
+    }
+    return;
+  }
+
+  const blob = new Blob([htmlText], { type: "text/html" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 function applyLoadedData(data) {
   fieldIds.forEach(id => {
     if (data[id] !== undefined) setField(id, data[id]);
@@ -988,6 +1072,7 @@ document.addEventListener("DOMContentLoaded", () => {
     alert("保存しました。");
   });
   document.getElementById("btnSaveFile").addEventListener("click", saveToFile);
+  document.getElementById("btnSaveInternalHtml").addEventListener("click", saveToInternalHtml);
   document.getElementById("btnOpenFile").addEventListener("click", openFromFile);
   document.getElementById("fileInput").addEventListener("change", async (e) => {
     const file = e.target.files[0];

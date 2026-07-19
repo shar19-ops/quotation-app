@@ -14,6 +14,7 @@
     <button id="btnNew">新規作成</button>
     <button id="btnSave">保存</button>
     <button id="btnSaveFile">ファイルに保存</button>
+    <button id="btnSaveInternalHtml">社内回送用に保存(HTML)</button>
     <button id="btnOpenFile">ファイルを開く</button>
     <input type="file" id="fileInput" accept="application/json" style="display:none">
     <button id="btnPrint">プレビュー</button>
@@ -24,6 +25,7 @@
     <option value="red">赤</option>
   </select>
   <p class="hint">「保存」はブラウザ内に自動保存します。「ファイルに保存」は任意のフォルダにファイルとして保存し、「ファイルを開く」でそのファイルを読み込めます。「プレビュー」を押すと印刷プレビューが開きます。</p>
+  <p class="hint">「社内回送用に保存(HTML)」は、今の入力内容を含んだこのアプリ自体のコピーを1つのHTMLファイルとして保存します。受け取った人はこのアプリを持っていなくてもブラウザで開くだけで内容を確認・印刷でき、社内の確認・回覧用に適しています(配布用の単一HTMLファイルで開いている場合のみ使用できます)。</p>
   <p class="hint hint-notice">電子印が押印されている場合、ファイルに保存した「.json」ファイルを担当者宛にメールにて送ってください。電子印がない場合は印刷して押印後、郵送ください。</p>
 </div>
 
@@ -89,8 +91,8 @@
             <p class="stamp-section-label">担当者印①</p>
             <label>画像 <input type="file" id="stampImage" accept="image/png,image/jpeg"></label>
             <div class="two-col">
-              <label>X <input type="number" id="stampX" value="1480"></label>
-              <label>Y <input type="number" id="stampY" value="535"></label>
+              <label>X <input type="number" id="stampX" value="1586"></label>
+              <label>Y <input type="number" id="stampY" value="538"></label>
             </div>
             <label>サイズ <input type="number" id="stampSize" min="20" max="400" value="50"></label>
             <button type="button" id="btnRemoveStamp">削除</button>
@@ -99,8 +101,8 @@
             <p class="stamp-section-label">担当者印②</p>
             <label>画像 <input type="file" id="stampImage2" accept="image/png,image/jpeg"></label>
             <div class="two-col">
-              <label>X <input type="number" id="stampX2" value="1360"></label>
-              <label>Y <input type="number" id="stampY2" value="535"></label>
+              <label>X <input type="number" id="stampX2" value="1497"></label>
+              <label>Y <input type="number" id="stampY2" value="538"></label>
             </div>
             <label>サイズ <input type="number" id="stampSize2" min="20" max="400" value="50"></label>
             <button type="button" id="btnRemoveStamp2">削除</button>
@@ -109,8 +111,8 @@
             <p class="stamp-section-label">担当者印③</p>
             <label>画像 <input type="file" id="stampImage3" accept="image/png,image/jpeg"></label>
             <div class="two-col">
-              <label>X <input type="number" id="stampX3" value="1240"></label>
-              <label>Y <input type="number" id="stampY3" value="535"></label>
+              <label>X <input type="number" id="stampX3" value="1410"></label>
+              <label>Y <input type="number" id="stampY3" value="538"></label>
             </div>
             <label>サイズ <input type="number" id="stampSize3" min="20" max="400" value="50"></label>
             <button type="button" id="btnRemoveStamp3">削除</button>
