@@ -479,9 +479,12 @@ function closePrintPreview() {
 
 function suggestedFileName() {
   const data = collectFormData();
-  const name = (data.vendorName || "").replace(/[\\/:*?"<>|]/g, "").trim();
-  const no   = data.vendorQuoteNo ? `第${data.vendorQuoteNo}号` : todayIso();
-  const parts = ["見積書", name, no].filter(Boolean);
+  const sanitize = (s) => (s || "").replace(/[\\/:*?"<>|]/g, "").trim();
+  const projectNo = sanitize(data.projectNo);
+  const dateStr = (data.vendorQuoteDate || todayIso()).replace(/-/g, "");
+  const quoteNo = sanitize(data.vendorQuoteNo);
+  const name = sanitize(data.vendorName);
+  const parts = [projectNo, "見積書", dateStr, quoteNo, name].filter(Boolean);
   return parts.join("_") + ".json";
 }
 
@@ -653,6 +656,176 @@ function newQuotation() {
   saveDraft();
 }
 
+// ===== CSV取込(工事情報: 事業所/工番/工事名/施工場所/工期) =====
+
+const CSV_COLUMNS = ["事業所", "工番", "工事名", "施工場所", "工期(開始)", "工期(終了)"];
+
+// Excelの「CSV(コンマ区切り)」保存はShift_JIS、「CSV UTF-8」保存はUTF-8になるため両対応する。
+// UTF-8として厳密デコードして失敗したらShift_JISとして読み直す。
+async function readCsvFile(file) {
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+    return new TextDecoder("utf-8").decode(bytes);
+  }
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch (e) {
+    return new TextDecoder("shift_jis").decode(bytes);
+  }
+}
+
+function parseCsv(text) {
+  const src = text.charCodeAt(0) === 0xFEFF ? text.slice(1) : text;
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (src[i + 1] === '"') { field += '"'; i++; }
+        else inQuotes = false;
+      } else {
+        field += c;
+      }
+    } else if (c === '"') {
+      inQuotes = true;
+    } else if (c === ',') {
+      row.push(field); field = "";
+    } else if (c === '\r') {
+      // skip
+    } else if (c === '\n') {
+      row.push(field); rows.push(row); row = []; field = "";
+    } else {
+      field += c;
+    }
+  }
+  if (field !== "" || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(f => f.trim() !== ""));
+}
+
+function normalizeDate(raw) {
+  const s = (raw || "").trim();
+  if (!s) return "";
+  let m = s.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日$/);
+  if (m) return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+  m = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/);
+  if (m) return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+  // Excelのシリアル値(1900年1月1日=1)で保存されたセルへのフォールバック
+  if (/^\d{4,6}$/.test(s)) {
+    const epoch = new Date(Date.UTC(1899, 11, 30));
+    const d = new Date(epoch.getTime() + Number(s) * 86400000);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  }
+  return "";
+}
+
+function matchBranchType(raw) {
+  const s = (raw || "").trim();
+  if (!s) return "";
+  const select = document.getElementById("branchType");
+  for (const opt of select.options) {
+    if (!opt.value) continue;
+    const [label, code] = opt.value.split("|");
+    if (s === opt.value || s === label || s === code || s === `${label}(${code})`) return opt.value;
+  }
+  return "";
+}
+
+function parseCsvRows(text) {
+  const rows = parseCsv(text);
+  if (!rows.length) return [];
+  const header = rows[0].map(h => h.trim());
+  const idx = {};
+  CSV_COLUMNS.forEach(col => { idx[col] = header.indexOf(col); });
+  const missing = CSV_COLUMNS.filter(col => idx[col] === -1);
+  if (missing.length) {
+    throw new Error("CSVのヘッダーに次の列が見つかりません: " + missing.join("、"));
+  }
+  return rows.slice(1).map(r => {
+    const periodStartRaw = (r[idx["工期(開始)"]] || "").trim();
+    const periodEndRaw   = (r[idx["工期(終了)"]] || "").trim();
+    return {
+      branchTypeRaw: (r[idx["事業所"]] || "").trim(),
+      projectNo:     (r[idx["工番"]] || "").trim(),
+      projectName:   (r[idx["工事名"]] || "").trim(),
+      siteLocation:  (r[idx["施工場所"]] || "").trim(),
+      periodStartRaw,
+      periodEndRaw,
+      periodStart: normalizeDate(periodStartRaw),
+      periodEnd:   normalizeDate(periodEndRaw),
+    };
+  });
+}
+
+let csvImportRows = [];
+
+function openCsvImportModal(rows) {
+  csvImportRows = rows;
+  const body = document.getElementById("csvImportBody");
+  body.innerHTML = "";
+  rows.forEach((row, i) => {
+    const branchValue = matchBranchType(row.branchTypeRaw);
+    const branchLabel = branchValue ? branchValue.split("|")[0] : (row.branchTypeRaw ? `${row.branchTypeRaw}(未一致)` : "(空欄)");
+    const startOk = !row.periodStartRaw || row.periodStart;
+    const endOk = !row.periodEndRaw || row.periodEnd;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td class="${branchValue ? "" : "csv-row-warn"}">${escapeAttr(branchLabel)}</td>
+      <td>${escapeAttr(row.projectNo)}</td>
+      <td>${escapeAttr(row.projectName)}</td>
+      <td>${escapeAttr(row.siteLocation)}</td>
+      <td class="${startOk ? "" : "csv-row-warn"}">${escapeAttr(row.periodStart || row.periodStartRaw)}</td>
+      <td class="${endOk ? "" : "csv-row-warn"}">${escapeAttr(row.periodEnd || row.periodEndRaw)}</td>
+      <td><button type="button" class="btn-csv-apply" data-idx="${i}">この行を取込</button></td>
+    `;
+    body.appendChild(tr);
+  });
+  document.getElementById("csvImportSummary").textContent =
+    `${rows.length}件のデータが見つかりました。取込む行の「この行を取込」を押してください。(オレンジ色の項目は自動変換できませんでした)`;
+  body.querySelectorAll(".btn-csv-apply").forEach(btn => {
+    btn.addEventListener("click", () => applyCsvRow(Number(btn.dataset.idx)));
+  });
+  document.getElementById("csvImportModal").style.display = "flex";
+}
+
+function closeCsvImportModal() {
+  document.getElementById("csvImportModal").style.display = "none";
+}
+
+function applyCsvRow(idx) {
+  const row = csvImportRows[idx];
+  if (!row) return;
+  const branchValue = matchBranchType(row.branchTypeRaw);
+  if (row.branchTypeRaw && !branchValue) {
+    alert(`事業所「${row.branchTypeRaw}」は選択肢と一致しませんでした。事業所は手動で選択してください。`);
+  }
+  if (branchValue) setField("branchType", branchValue);
+  setField("projectNo", row.projectNo);
+  setField("projectName", row.projectName);
+  setField("siteLocation", row.siteLocation);
+  if (row.periodStart) setField("periodStart", row.periodStart);
+  if (row.periodEnd) setField("periodEnd", row.periodEnd);
+  closeCsvImportModal();
+  renderPreview();
+  saveDraft();
+}
+
+function downloadCsvTemplate() {
+  const header = CSV_COLUMNS.join(",");
+  const example = ["本店", "26-0001", "〇〇ビル新築電気設備工事", "東京都千代田区〇〇1-2-3", "2026-08-01", "2026-12-20"].join(",");
+  const csv = "﻿" + header + "\r\n" + example + "\r\n";
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "工事情報_取込ひな形.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   loadDraft();
 
@@ -697,6 +870,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     e.target.value = "";
   });
+
+  document.getElementById("btnImportCsv").addEventListener("click", () => {
+    document.getElementById("csvInput").click();
+  });
+  document.getElementById("csvInput").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    try {
+      const text = await readCsvFile(file);
+      const rows = parseCsvRows(text);
+      if (!rows.length) { alert("CSVにデータ行が見つかりませんでした。"); return; }
+      openCsvImportModal(rows);
+    } catch (err) {
+      alert("CSVの読込に失敗しました: " + err.message);
+    }
+  });
+  document.getElementById("btnDownloadCsvTemplate").addEventListener("click", downloadCsvTemplate);
+  document.getElementById("btnCloseCsvImport").addEventListener("click", closeCsvImportModal);
+  document.getElementById("btnCloseCsvImport2").addEventListener("click", closeCsvImportModal);
 
   document.getElementById("btnAddItem").addEventListener("click", addItem);
   document.getElementById("btnNew").addEventListener("click", newQuotation);

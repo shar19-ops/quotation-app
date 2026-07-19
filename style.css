@@ -238,6 +238,76 @@ legend {
   font-size: 13px;
 }
 
+/* ===== CSV取込 ===== */
+
+.csv-import-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.csv-import-row button {
+  padding: 6px 12px;
+  border: 1px solid #2563eb;
+  color: #2563eb;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.csv-import-row .btn-secondary {
+  border-color: #9ca3af;
+  color: #4b5563;
+}
+
+.csv-import-inner {
+  width: 90vw;
+  max-width: 900px;
+}
+
+.csv-import-table-wrap {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.csv-import-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.csv-import-table th,
+.csv-import-table td {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.csv-import-table th {
+  color: #6b7280;
+  font-size: 12px;
+  position: sticky;
+  top: 0;
+  background: #f3f4f6;
+}
+
+.csv-row-warn {
+  color: #b45309;
+}
+
+.btn-csv-apply {
+  padding: 4px 10px;
+  border: 1px solid #2563eb;
+  color: #2563eb;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .stamp-columns {
   display: flex;
   flex-direction: row-reverse;

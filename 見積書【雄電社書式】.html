@@ -33,6 +33,12 @@
     <div class="info-columns">
       <fieldset>
         <legend>工事情報</legend>
+        <div class="csv-import-row">
+          <button type="button" id="btnImportCsv">CSVから読込</button>
+          <input type="file" id="csvInput" accept=".csv,text/csv" style="display:none">
+          <button type="button" id="btnDownloadCsvTemplate" class="btn-secondary">ひな形をダウンロード</button>
+        </div>
+        <p class="form-hint">CSVヘッダー行: 事業所,工番,工事名,施工場所,工期(開始),工期(終了)。文字コードはUTF-8/Shift_JISどちらも可。日付は yyyy-mm-dd (yyyy/mm/dd も可)。事業所は「本店」等の名称で入力してください。</p>
         <label>事業所(本支店区分)
           <select id="branchType">
             <option value="">選択してください</option>
@@ -52,7 +58,6 @@
           <label>工期(開始) <input type="date" id="periodStart"></label>
           <label>工期(終了) <input type="date" id="periodEnd"></label>
         </div>
-        <label>見積有効期限(見積日より) <input type="number" id="validDays" min="0" placeholder="日間"></label>
       </fieldset>
 
       <fieldset>
@@ -67,6 +72,7 @@
           <label>電話 <input type="text" id="vendorTel"></label>
           <label>業者コード <input type="text" id="vendorCode" maxlength="5"></label>
         </div>
+        <label>見積有効期限(見積日より) <input type="number" id="validDays" min="0" placeholder="日間"></label>
         <div class="stamp-section">
           <p class="stamp-section-label">社判</p>
           <p class="form-hint">PNG推奨(透過背景)。位置は数値入力または印刷プレビュー上でドラッグして移動できます。</p>
@@ -181,6 +187,30 @@
     <div class="preview-modal-footer">
       <button id="btnPrintFromPreview">印刷実行</button>
       <button class="btn-modal-close" id="btnClosePreview2">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- CSV取込モーダル -->
+<div id="csvImportModal" class="preview-modal no-print" style="display:none;">
+  <div class="preview-modal-inner csv-import-inner">
+    <div class="preview-modal-header">
+      <span class="preview-modal-title">CSVから工事情報を取込</span>
+      <button class="btn-modal-close" id="btnCloseCsvImport">✕ 閉じる</button>
+    </div>
+    <div class="preview-modal-body">
+      <p class="form-hint" id="csvImportSummary"></p>
+      <div class="csv-import-table-wrap">
+        <table class="csv-import-table">
+          <thead>
+            <tr><th>事業所</th><th>工番</th><th>工事名</th><th>施工場所</th><th>工期(開始)</th><th>工期(終了)</th><th></th></tr>
+          </thead>
+          <tbody id="csvImportBody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="preview-modal-footer">
+      <button class="btn-modal-close" id="btnCloseCsvImport2">閉じる</button>
     </div>
   </div>
 </div>
