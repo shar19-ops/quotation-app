@@ -38,6 +38,8 @@ const COORDS = {
   branchCode:   { x: 356, y: 270 },
   branchName:   { x: 490, y: 270 },
   projectNo:    { x: 332, y: 301 },
+  projectNoCenter: 382, // 「工事名(  )」の括弧内(304〜459px)の中心
+  projectNoWidth: 150,  // 12桁英数字が収まる幅。超える場合は横方向に縮小する
   projectName:  { x: 490, y: 301 },
   siteLocation: { x: 317, y: 350 },
 
@@ -240,6 +242,32 @@ function addOverlayCenter(layer, centerXPx, widthPx, yPx, text, extraClass) {
   layer.appendChild(span);
 }
 
+// .ov と同じフォントで文字列の幅を測り、150dpi基準pxで返す
+let measureCtx = null;
+function measureOverlayTextPx(text) {
+  if (!measureCtx) measureCtx = document.createElement("canvas").getContext("2d");
+  const fontPx = 4.11 * 96 / 25.4; // style.css の .ov font-size(4.11mm)をCSS pxに換算
+  measureCtx.font = `${fontPx}px "MS Gothic", "Yu Gothic", "Hiragino Sans", sans-serif`;
+  return measureCtx.measureText(text).width * 150 / 96;
+}
+
+// 中心(centerXPx)を基準に中央寄せで配置し、widthPxを超える場合は横方向に縮小して収める
+function addOverlayFit(layer, centerXPx, widthPx, yPx, text, extraClass) {
+  if (text === "" || text === undefined || text === null) return;
+  const span = document.createElement("span");
+  span.className = "ov" + (extraClass ? " " + extraClass : "");
+  const textW = measureOverlayTextPx(text);
+  const scale = textW > widthPx ? widthPx / textW : 1;
+  span.style.left = mm(centerXPx - textW * scale / 2) + "mm";
+  span.style.top = mm(yPx) + "mm";
+  if (scale < 1) {
+    span.style.transform = `scaleX(${scale})`;
+    span.style.transformOrigin = "left top";
+  }
+  span.textContent = text;
+  layer.appendChild(span);
+}
+
 function digitGridDigits(amount) {
   const numStr = String(Math.max(0, Math.round(amount || 0)));
   const padded = numStr.padStart(11, " ").slice(-11);
@@ -273,7 +301,7 @@ function buildOverlay(layer, data, enableStampDrag) {
   addOverlay(layer, COORDS.branchCode.x, COORDS.branchCode.y, branchCode || "");
   addOverlay(layer, COORDS.branchName.x, COORDS.branchName.y, branchName || "");
 
-  addOverlay(layer, COORDS.projectNo.x, COORDS.projectNo.y, data.projectNo);
+  addOverlayFit(layer, COORDS.projectNoCenter, COORDS.projectNoWidth, COORDS.projectNo.y, data.projectNo);
   addOverlay(layer, COORDS.projectName.x, COORDS.projectName.y, data.projectName);
   addOverlay(layer, COORDS.siteLocation.x, COORDS.siteLocation.y, data.siteLocation);
 
