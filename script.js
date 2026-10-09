@@ -378,10 +378,30 @@ function collectFormData() {
   return data;
 }
 
+// ブラウザ内保存(localStorage)は約5MBが上限。添付PDF/画像が多いと超過して例外になり、
+// 呼び出し元(印刷実行など)の処理まで止まってしまうため、ここで例外を握りつぶす。
+// 超過時は添付を除いて保存し、添付は「ファイルに保存」で残すよう一度だけ案内する。
+let draftQuotaWarned = false;
 function saveDraft() {
   const data = collectFormData();
   data.items = items;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    return;
+  } catch (err) {
+    console.warn("ブラウザ内保存に失敗しました(添付を除いて再保存します):", err);
+  }
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...data, attachments: [] }));
+  } catch (err) {
+    console.error("ブラウザ内保存に失敗しました:", err);
+  }
+  if (!draftQuotaWarned) {
+    draftQuotaWarned = true;
+    alert("添付ファイルの容量が大きいため、添付ファイルはブラウザ内に自動保存できません。\n" +
+          "入力内容と添付ファイルを残すには「ファイルに保存」を使用してください。\n" +
+          "(このまま印刷することはできます)");
+  }
 }
 
 function dataUrlToBlob(dataUrl) {
@@ -1086,7 +1106,7 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("btnClosePreview2").addEventListener("click", closePrintPreview);
   document.getElementById("btnPrintFromPreview").addEventListener("click", () => {
     closePrintPreview();
-    saveDraft();
+    try { saveDraft(); } catch (err) { console.error(err); } // 保存に失敗しても印刷は続行する
     window.print();
   });
 
