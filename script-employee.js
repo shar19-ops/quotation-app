@@ -194,7 +194,12 @@ function getField(id) {
   return document.getElementById(id).value;
 }
 
+// 事業所CD（2026-11-12 基幹系変更に伴い 010〜090 → 100〜700 に変更）。
+// 保存データ・下書きに残っている旧い値（例: "本店|010"）は、読み込み時に新しい値に読み替える
+const BRANCH_TYPE_RENAMED = { "本店|010": "本店|100", "横浜支店|030": "横浜支店|200", "東関東支店|020": "東関東支店|300", "北関東支店|090": "北関東支店|400", "大阪支店|040": "大阪支店|500", "仙台支店|060": "仙台支店|600", "名古屋支店|050": "名古屋支店|700" };
+
 function setField(id, value) {
+  if (id === "branchType") value = BRANCH_TYPE_RENAMED[value] || value;
   document.getElementById(id).value = value ?? "";
 }
 
