@@ -79,7 +79,6 @@ TABLE["bottom"] = TABLE["top"] + TABLE["header_h"] + TABLE["row_h"] * TABLE["row
 
 NOTES_BOX = (12, 225, 198, 266)
 CONFIRM_BOXES = {"left": 12, "top": 270, "w": 23, "h": 18, "count": 4}
-NEXT_PAGE = (151, 279)  # -次葉に続く- (中心)
 
 
 def build(color_name):
@@ -186,7 +185,6 @@ def build(color_name):
     for i in range(c["count"]):
         bx = c["left"] + c["w"] * i
         rect(bx, c["top"], bx + c["w"], c["top"] + c["h"])
-    text(*NEXT_PAGE, "－ 次 葉 に 続 く －", size=3.4, anchor="mm")
 
     out = ASSETS / f"{color_name}_bg_portrait.png"
     page.save(out, dpi=(DPI, DPI), optimize=True)
