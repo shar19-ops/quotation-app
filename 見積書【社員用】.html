@@ -10,12 +10,18 @@
 <body class="employee-app">
 
 <div class="toolbar no-print">
-  <h1>社員用見積書アプリ(雄電社様式) <span class="app-version">v2026.11.12</span></h1>
+  <h1>社員用見積書アプリ(雄電社様式) <span class="app-version">v2026.11.16β</span><span class="beta-badge">β版 A4縦</span></h1>
   <div class="toolbar-buttons">
     <button id="btnOpenFile">ファイルを開く</button>
     <input type="file" id="fileInput" accept="application/json" style="display:none">
     <button id="btnPrint">プレビュー</button>
     <button id="btnMail">📧 メール送信</button>
+    <label class="orientation-select">帳票の向き
+      <select id="orientation">
+        <option value="portrait">A4縦(β版)</option>
+        <option value="landscape">A4横(現行)</option>
+      </select>
+    </label>
   </div>
   <!-- themeColor は JS が参照するため非表示で保持 -->
   <select id="themeColor" style="display:none">
@@ -188,6 +194,8 @@
 <!-- 背景画像参照用: JSがsrcを読む -->
 <img id="bgBlueSrc" src="assets/blue_bg.png" style="display:none" alt="">
 <img id="bgRedSrc"  src="assets/red_bg.png"  style="display:none" alt="">
+<img id="bgBluePortraitSrc" src="assets/blue_bg_portrait.png" style="display:none" alt="">
+<img id="bgRedPortraitSrc"  src="assets/red_bg_portrait.png"  style="display:none" alt="">
 
 <script src="date-stamp.js"></script>
 <script src="script-employee.js"></script>

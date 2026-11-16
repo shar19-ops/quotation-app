@@ -687,6 +687,54 @@ legend {
   color: #2563eb;
 }
 
+/* ===== 帳票の向き: A4縦(β版) ===== */
+/* 印刷時の用紙の向き(@page size)は script.js の applyOrientationView() が切り替える */
+
+.orientation-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  font-size: 13px;
+}
+
+.orientation-select select {
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.beta-badge {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: #f59e0b;
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: bold;
+  vertical-align: middle;
+}
+
+.orient-portrait .quote-page,
+.orient-portrait .bg-image,
+.orient-portrait .overlay-layer {
+  width: 210mm;
+  height: 297mm;
+}
+
+/* 添付は横向きに回転して保存しているため、縦の帳票では90°戻して表示する */
+.orient-portrait .attachment-page img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 297mm;
+  height: 210mm;
+  max-width: none;
+  max-height: none;
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+
 @media print {
   @page { size: A4 landscape; margin: 0; }
   .no-print { display: none !important; }

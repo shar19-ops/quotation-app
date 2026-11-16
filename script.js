@@ -14,7 +14,6 @@ const fieldIds = [
   "stampX4", "stampY4", "stampSize4"
 ];
 
-const DEFAULT_ROWS = 9;
 
 let stampDataUrl  = null;
 let stampDataUrl2 = null;
@@ -69,6 +68,8 @@ const DIGIT_GRID = { x0: 303.6, colWidth: 44.2, y: 545 };
 const ITEMS_LAYOUT = {
   rowTop: 660,
   rowHeight: 41.2,
+  textOffset: 9,
+  totalRowY: 1039,
   cols: {
     name: 130,
     qtyRight: 773,
@@ -83,6 +84,133 @@ const ITEMS_LAYOUT = {
   }
 };
 
+// ===== 帳票の向き(A4横=現行 / A4縦=β版) =====
+// A4縦の帳票(assets/*_bg_portrait.png)は templates/portrait/build_portrait_template.py で
+// A4横の帳票から部品を切り出して組み立てている。縦の座標は「横の座標 + 部品の移動量」で計算する
+// (移動量は同スクリプトの PLACE の値。200dpi px の移動量 × 0.75 = 150dpi px)。
+const DEFAULT_ORIENTATION = "portrait"; // β版は縦が既定。承認前の本番(main)は横のまま
+
+// 横の座標(px@150)を、部品の移動量(px@200)だけずらす
+function shiftPt(pt, dx200, dy200) {
+  return { x: pt.x + dx200 * 0.75, y: pt.y + dy200 * 0.75 };
+}
+
+const PORTRAIT_COORDS = (() => {
+  const C = COORDS;
+  const QUOTE = [-646, -37];   // 業者見積日・番号
+  const PROJECT = [-50, -35];  // 本支店区分〜見積有効期限
+  const VENDOR = [-1422, 263]; // 住所・社名・電話
+  const CODE = [-651, 30];     // 業者コード・業者担当者印
+  return {
+    vendorQuoteDate_y: shiftPt(C.vendorQuoteDate_y, ...QUOTE),
+    vendorQuoteDate_m: shiftPt(C.vendorQuoteDate_m, ...QUOTE),
+    vendorQuoteDate_d: shiftPt(C.vendorQuoteDate_d, ...QUOTE),
+    vendorQuoteNo:     shiftPt(C.vendorQuoteNo, ...QUOTE),
+    vendorQuoteNoCenter: C.vendorQuoteNoCenter + QUOTE[0] * 0.75,
+
+    branchCode:   shiftPt(C.branchCode, ...PROJECT),
+    branchName:   shiftPt(C.branchName, ...PROJECT),
+    projectNo:    shiftPt(C.projectNo, ...PROJECT),
+    projectNoCenter: C.projectNoCenter + PROJECT[0] * 0.75,
+    projectNoWidth: C.projectNoWidth,
+    projectName:  shiftPt(C.projectName, ...PROJECT),
+    siteLocation: shiftPt(C.siteLocation, ...PROJECT),
+
+    period_y1: shiftPt(C.period_y1, ...PROJECT),
+    period_m1: shiftPt(C.period_m1, ...PROJECT),
+    period_d1: shiftPt(C.period_d1, ...PROJECT),
+    period_y2: shiftPt(C.period_y2, ...PROJECT),
+    period_m2: shiftPt(C.period_m2, ...PROJECT),
+    period_d2: shiftPt(C.period_d2, ...PROJECT),
+
+    validDays: shiftPt(C.validDays, ...PROJECT),
+
+    vendorAddress: shiftPt(C.vendorAddress, ...VENDOR),
+    vendorName:    shiftPt(C.vendorName, ...VENDOR),
+    vendorTel:     shiftPt(C.vendorTel, ...VENDOR),
+    vendorTextWidth: 600, // 住所・社名・電話の印字幅(px@150)。超える場合は横方向に縮小
+    vendorCode:    shiftPt(C.vendorCode, ...CODE),
+    vendorCodeCenter: C.vendorCodeCenter + CODE[0] * 0.75,
+    vendorCodeWidth: C.vendorCodeWidth,
+
+    // 法定福利費: 部品を0.8倍に縮小して見積総額の右に配置(1040,895 px@200)
+    // (横の印字位置1389px@200 は切り出し元の左端1135から254px → 縮小後203px。縦位置は文字の中心を合わせる)
+    welfareCost: { x: (1040 + (1389.3 - 1135) * 0.8) * 0.75, y: 674 },
+
+    // 註記: 「-次葉に続く- 註記」の下(846,2155 px@200)
+    notes: { x: 846 * 0.75, y: 2155 * 0.75 }
+  };
+})();
+
+// 明細表(縦): build_portrait_template.py の TABLE と対応(px@200 × 0.75)
+const PORTRAIT_ITEMS_LAYOUT = (() => {
+  const PITCH = 35.227;
+  const priceSenLeft = 686 + PITCH * 7;          // 銭の境
+  const amountRight = 686 + PITCH * 9 + PITCH * 10;
+  const rowH = 49.5;
+  return {
+    rowTop: (1000 + 55) * 0.75,
+    rowHeight: rowH * 0.75,
+    textOffset: (rowH * 0.75 - 4.11 / PX2MM) / 2 + 0.5,
+    cols: {
+      name: (94 + 28) * 0.75,
+      nameWidth: (494 - 8 - 122) * 0.75,         // 品名の印字幅。超える場合は横方向に縮小
+      qtyRight: (606 - 19.3) * 0.75,
+      qtyWidth: 80,
+      unitCenter: (606 + 686) / 2 * 0.75,
+      unitWidth: 55,
+      priceRight: (priceSenLeft + 9.2) * 0.75,
+      priceWidth: 220,
+      senRight: (priceSenLeft + PITCH * 2 + 9.2) * 0.75, // 銭(2桁)は網掛けの2マスに入れる
+      amountRight: (amountRight + 8.5) * 0.75,
+      amountWidth: 300,
+      remarks: (amountRight + 14) * 0.75,
+      remarksWidth: (1559 - 8 - amountRight - 14) * 0.75 // 備考の印字幅。超える場合は横方向に縮小
+    }
+  };
+})();
+
+const LAYOUTS = {
+  landscape: {
+    pageW: 1754, pageH: 1240,
+    coords: COORDS,
+    digitGrid: DIGIT_GRID,
+    items: ITEMS_LAYOUT,
+    rows: 9,
+    bg: { blue: () => BG_BLUE_SRC(), red: () => BG_RED_SRC() },
+    stampDefaults: {
+      stampX4: 1480, stampY4: 300,
+      stampX: 1586, stampY: 538,
+      stampX2: 1497, stampY2: 538,
+      stampX3: 1410, stampY3: 538
+    }
+  },
+  portrait: {
+    pageW: 1240, pageH: 1754,
+    coords: PORTRAIT_COORDS,
+    digitGrid: { x0: DIGIT_GRID.x0 - 50 * 0.75, colWidth: DIGIT_GRID.colWidth, y: DIGIT_GRID.y + 201 * 0.75 },
+    items: PORTRAIT_ITEMS_LAYOUT,
+    rows: 20,
+    bg: {
+      blue: () => document.getElementById("bgBluePortraitSrc").src,
+      red:  () => document.getElementById("bgRedPortraitSrc").src
+    },
+    stampDefaults: {
+      stampX4: 600, stampY4: 505,
+      stampX: 1586 - 651 * 0.75, stampY: 538 + 30 * 0.75,
+      stampX2: 1497 - 651 * 0.75, stampY2: 538 + 30 * 0.75,
+      stampX3: 1410 - 651 * 0.75, stampY3: 538 + 30 * 0.75
+    }
+  }
+};
+
+let orientation = DEFAULT_ORIENTATION;
+const layout = () => LAYOUTS[orientation];
+
+// 押印位置は向きごとに別々に保持する(横で調整した位置を縦に持ち込まない)
+const STAMP_POS_IDS = ["stampX", "stampY", "stampX2", "stampY2", "stampX3", "stampY3", "stampX4", "stampY4"];
+let stampPos = {}; // { landscape: {stampX: .., ...}, portrait: {...} }
+
 let items = [];
 
 function emptyItem() {
@@ -93,10 +221,10 @@ function isEmptyItem(item) {
   return !item.name && !item.qty && !item.unit && !item.price && !item.remarks;
 }
 
-// 過去のDEFAULT_ROWS(10行)時代に保存されたデータを開いた場合、末尾の空行を現在の行数まで詰める
+// 末尾の空行を今の向きの既定行数(横9行・縦20行)まで詰める(過去の10行時代のデータにも対応)
 function trimTrailingEmptyRows(arr) {
   const result = arr.slice();
-  while (result.length > DEFAULT_ROWS && isEmptyItem(result[result.length - 1])) {
+  while (result.length > layout().rows && isEmptyItem(result[result.length - 1])) {
     result.pop();
   }
   return result;
@@ -273,15 +401,41 @@ function addOverlayFit(layer, centerXPx, widthPx, yPx, text, extraClass) {
   layer.appendChild(span);
 }
 
+// 左端(xPx)から配置し、widthPxを超える場合は横方向に縮小して収める(縦の帳票の品名・備考・業者情報用)
+function addOverlayFitLeft(layer, xPx, widthPx, yPx, text, extraClass) {
+  if (text === "" || text === undefined || text === null) return;
+  const span = document.createElement("span");
+  span.className = "ov" + (extraClass ? " " + extraClass : "");
+  const textW = measureOverlayTextPx(String(text));
+  span.style.left = mm(xPx) + "mm";
+  span.style.top = mm(yPx) + "mm";
+  if (textW > widthPx) {
+    span.style.transform = `scaleX(${widthPx / textW})`;
+    span.style.transformOrigin = "left top";
+  }
+  span.textContent = text;
+  layer.appendChild(span);
+}
+
+// widthPx が指定されていれば縮小して収め、無ければ従来どおり置くだけ(横の帳票は従来の見た目を維持)
+function addOverlayMaybeFit(layer, xPx, widthPx, yPx, text, extraClass) {
+  if (widthPx) addOverlayFitLeft(layer, xPx, widthPx, yPx, text, extraClass);
+  else addOverlay(layer, xPx, yPx, text, extraClass);
+}
+
 function digitGridDigits(amount) {
   const numStr = String(Math.max(0, Math.round(amount || 0)));
   const padded = numStr.padStart(11, " ").slice(-11);
   return padded.split("");
 }
 
+function bgSrc(color) {
+  return layout().bg[color === "red" ? "red" : "blue"]();
+}
+
 function renderPreview() {
   const data = collectFormData();
-  document.getElementById("bgImage").src = data.themeColor === "red" ? BG_RED_SRC() : BG_BLUE_SRC();
+  document.getElementById("bgImage").src = bgSrc(data.themeColor);
   buildOverlay(document.getElementById("overlayLayer"), data, true);
   renderAltPreview();
 }
@@ -289,42 +443,46 @@ function renderPreview() {
 function renderAltPreview() {
   const data = collectFormData();
   const altTheme = data.themeColor === "red" ? "blue" : "red";
-  document.getElementById("bgImageAlt").src = altTheme === "red" ? BG_RED_SRC() : BG_BLUE_SRC();
+  document.getElementById("bgImageAlt").src = bgSrc(altTheme);
   buildOverlay(document.getElementById("overlayLayerAlt"), data, false);
 }
 
 function buildOverlay(layer, data, enableStampDrag) {
   layer.innerHTML = "";
+  const L = layout();
+  const C = L.coords;
+  const IL = L.items;
+  const DG = L.digitGrid;
 
   const qd = splitDate(data.vendorQuoteDate);
-  addOverlay(layer, COORDS.vendorQuoteDate_y.x, COORDS.vendorQuoteDate_y.y, qd.y);
-  addOverlay(layer, COORDS.vendorQuoteDate_m.x, COORDS.vendorQuoteDate_m.y, qd.m);
-  addOverlay(layer, COORDS.vendorQuoteDate_d.x, COORDS.vendorQuoteDate_d.y, qd.d);
-  addOverlayCenter(layer, COORDS.vendorQuoteNoCenter, 160, COORDS.vendorQuoteNo.y, data.vendorQuoteNo);
+  addOverlay(layer, C.vendorQuoteDate_y.x, C.vendorQuoteDate_y.y, qd.y);
+  addOverlay(layer, C.vendorQuoteDate_m.x, C.vendorQuoteDate_m.y, qd.m);
+  addOverlay(layer, C.vendorQuoteDate_d.x, C.vendorQuoteDate_d.y, qd.d);
+  addOverlayCenter(layer, C.vendorQuoteNoCenter, 160, C.vendorQuoteNo.y, data.vendorQuoteNo);
 
   const [branchName, branchCode] = data.branchType ? data.branchType.split("|") : ["", ""];
-  addOverlay(layer, COORDS.branchCode.x, COORDS.branchCode.y, branchCode || "");
-  addOverlay(layer, COORDS.branchName.x, COORDS.branchName.y, branchName || "");
+  addOverlay(layer, C.branchCode.x, C.branchCode.y, branchCode || "");
+  addOverlay(layer, C.branchName.x, C.branchName.y, branchName || "");
 
-  addOverlayFit(layer, COORDS.projectNoCenter, COORDS.projectNoWidth, COORDS.projectNo.y, data.projectNo);
-  addOverlay(layer, COORDS.projectName.x, COORDS.projectName.y, data.projectName);
-  addOverlay(layer, COORDS.siteLocation.x, COORDS.siteLocation.y, data.siteLocation);
+  addOverlayFit(layer, C.projectNoCenter, C.projectNoWidth, C.projectNo.y, data.projectNo);
+  addOverlay(layer, C.projectName.x, C.projectName.y, data.projectName);
+  addOverlay(layer, C.siteLocation.x, C.siteLocation.y, data.siteLocation);
 
   const ps = splitDate(data.periodStart);
   const pe = splitDate(data.periodEnd);
-  addOverlay(layer, COORDS.period_y1.x, COORDS.period_y1.y, ps.y);
-  addOverlay(layer, COORDS.period_m1.x, COORDS.period_m1.y, ps.m);
-  addOverlay(layer, COORDS.period_d1.x, COORDS.period_d1.y, ps.d);
-  addOverlay(layer, COORDS.period_y2.x, COORDS.period_y2.y, pe.y);
-  addOverlay(layer, COORDS.period_m2.x, COORDS.period_m2.y, pe.m);
-  addOverlay(layer, COORDS.period_d2.x, COORDS.period_d2.y, pe.d);
+  addOverlay(layer, C.period_y1.x, C.period_y1.y, ps.y);
+  addOverlay(layer, C.period_m1.x, C.period_m1.y, ps.m);
+  addOverlay(layer, C.period_d1.x, C.period_d1.y, ps.d);
+  addOverlay(layer, C.period_y2.x, C.period_y2.y, pe.y);
+  addOverlay(layer, C.period_m2.x, C.period_m2.y, pe.m);
+  addOverlay(layer, C.period_d2.x, C.period_d2.y, pe.d);
 
-  addOverlay(layer, COORDS.validDays.x, COORDS.validDays.y, data.validDays);
+  addOverlay(layer, C.validDays.x, C.validDays.y, data.validDays);
 
-  addOverlay(layer, COORDS.vendorAddress.x, COORDS.vendorAddress.y, data.vendorAddress);
-  addOverlay(layer, COORDS.vendorName.x, COORDS.vendorName.y, data.vendorName);
-  addOverlay(layer, COORDS.vendorTel.x, COORDS.vendorTel.y, data.vendorTel);
-  addOverlayCenter(layer, COORDS.vendorCodeCenter, COORDS.vendorCodeWidth, COORDS.vendorCode.y, data.vendorCode);
+  addOverlayMaybeFit(layer, C.vendorAddress.x, C.vendorTextWidth, C.vendorAddress.y, data.vendorAddress);
+  addOverlayMaybeFit(layer, C.vendorName.x, C.vendorTextWidth, C.vendorName.y, data.vendorName);
+  addOverlayMaybeFit(layer, C.vendorTel.x, C.vendorTextWidth, C.vendorTel.y, data.vendorTel);
+  addOverlayCenter(layer, C.vendorCodeCenter, C.vendorCodeWidth, C.vendorCode.y, data.vendorCode);
 
   [
     { url: stampDataUrl4, xf: "stampX4", yf: "stampY4", sf: "stampSize4" },
@@ -344,58 +502,138 @@ function buildOverlay(layer, data, enableStampDrag) {
     layer.appendChild(img);
   });
 
-  addOverlay(layer, COORDS.welfareCost.x, COORDS.welfareCost.y, data.welfareCost ? yen(data.welfareCost) : "");
+  addOverlay(layer, C.welfareCost.x, C.welfareCost.y, data.welfareCost ? yen(data.welfareCost) : "");
 
   if (data.notes) {
     const span = document.createElement("span");
     span.className = "ov ov-notes";
-    span.style.left = mm(COORDS.notes.x) + "mm";
-    span.style.top = mm(COORDS.notes.y) + "mm";
+    span.style.left = mm(C.notes.x) + "mm";
+    span.style.top = mm(C.notes.y) + "mm";
     span.textContent = data.notes;
     layer.appendChild(span);
   }
 
   let subtotal = 0;
-  const rowCount = Math.max(items.length, DEFAULT_ROWS);
+  const rowCount = Math.max(items.length, L.rows);
   for (let i = 0; i < rowCount; i++) {
     const item = items[i] || emptyItem();
     const amount = (item.qty || 0) * (item.price || 0);
     subtotal += amount;
-    const rowY = ITEMS_LAYOUT.rowTop + i * ITEMS_LAYOUT.rowHeight + 9;
-    addOverlay(layer, ITEMS_LAYOUT.cols.name, rowY, item.name);
-    addOverlayRight(layer, ITEMS_LAYOUT.cols.qtyRight, ITEMS_LAYOUT.cols.qtyWidth, rowY, item.qty);
-    addOverlayCenter(layer, ITEMS_LAYOUT.cols.unitCenter, ITEMS_LAYOUT.cols.unitWidth, rowY, item.unit);
+    if (i >= L.rows && orientation === "portrait") continue; // 縦の帳票は枠外に印字しない(合計には含める)
+    const rowY = IL.rowTop + i * IL.rowHeight + IL.textOffset;
+    addOverlayMaybeFit(layer, IL.cols.name, IL.cols.nameWidth, rowY, item.name);
+    addOverlayRight(layer, IL.cols.qtyRight, IL.cols.qtyWidth, rowY, item.qty);
+    addOverlayCenter(layer, IL.cols.unitCenter, IL.cols.unitWidth, rowY, item.unit);
     if (Number(item.qty) !== 1) {
-      addOverlayRight(layer, ITEMS_LAYOUT.cols.priceRight, ITEMS_LAYOUT.cols.priceWidth, rowY, priceFmt(item.price), "ov-price");
+      if (IL.cols.senRight && item.price) {
+        // 縦の帳票: 整数部を銭の境に右寄せし、銭は小数点を付けずに網掛けの2マスへ
+        const [intPart, senPart] = Number(item.price).toFixed(2).split(".");
+        addOverlayRight(layer, IL.cols.priceRight, IL.cols.priceWidth, rowY, intPart, "ov-price");
+        if (senPart !== "00") addOverlayRight(layer, IL.cols.senRight, 60, rowY, senPart, "ov-price");
+      } else {
+        addOverlayRight(layer, IL.cols.priceRight, IL.cols.priceWidth, rowY, priceFmt(item.price), "ov-price");
+      }
     }
-    addOverlayRight(layer, ITEMS_LAYOUT.cols.amountRight, ITEMS_LAYOUT.cols.amountWidth, rowY, amount ? amountFmt(amount) : "", "ov-amount");
-    addOverlay(layer, ITEMS_LAYOUT.cols.remarks, rowY, item.remarks);
+    addOverlayRight(layer, IL.cols.amountRight, IL.cols.amountWidth, rowY, amount ? amountFmt(amount) : "", "ov-amount");
+    addOverlayMaybeFit(layer, IL.cols.remarks, IL.cols.remarksWidth, rowY, item.remarks);
   }
 
-  const totalRowY = 1039;
-  addOverlay(layer, ITEMS_LAYOUT.cols.name, totalRowY, "合計");
+  const totalRowY = IL.totalRowY !== undefined ? IL.totalRowY : IL.rowTop + L.rows * IL.rowHeight + IL.textOffset;
+  addOverlay(layer, IL.cols.name, totalRowY, "合計");
   const totalStr = amountFmt(subtotal);
   const totalCharWidth = 26.5; // 概算: グリフ幅+letter-spacing(6.5pt)分
-  const totalYenRightX = ITEMS_LAYOUT.cols.amountRight - (totalStr.length * totalCharWidth) - 2;
-  addOverlayRight(layer, ITEMS_LAYOUT.cols.amountRight, ITEMS_LAYOUT.cols.amountWidth, totalRowY, totalStr, "ov-amount");
+  const totalYenRightX = IL.cols.amountRight - (totalStr.length * totalCharWidth) - 2;
+  addOverlayRight(layer, IL.cols.amountRight, IL.cols.amountWidth, totalRowY, totalStr, "ov-amount");
   addOverlayRight(layer, totalYenRightX, 30, totalRowY, "¥", "ov-amount");
 
   const digits = digitGridDigits(subtotal);
   const firstDigitIndex = digits.findIndex(ch => ch.trim() !== "");
-  const yenRightX = (firstDigitIndex === -1 ? DIGIT_GRID.x0 + DIGIT_GRID.colWidth * (digits.length - 1) : DIGIT_GRID.x0 + firstDigitIndex * DIGIT_GRID.colWidth) - 4;
-  addOverlayRight(layer, yenRightX, DIGIT_GRID.colWidth, DIGIT_GRID.y, "¥", "ov-digit");
+  const yenRightX = (firstDigitIndex === -1 ? DG.x0 + DG.colWidth * (digits.length - 1) : DG.x0 + firstDigitIndex * DG.colWidth) - 4;
+  addOverlayRight(layer, yenRightX, DG.colWidth, DG.y, "¥", "ov-digit");
 
   digits.forEach((ch, i) => {
     if (ch.trim() === "") return;
-    const x = DIGIT_GRID.x0 + i * DIGIT_GRID.colWidth;
+    const x = DG.x0 + i * DG.colWidth;
     const span = document.createElement("span");
     span.className = "ov ov-digit";
     span.style.left = mm(x) + "mm";
-    span.style.top = mm(DIGIT_GRID.y) + "mm";
-    span.style.width = mm(DIGIT_GRID.colWidth) + "mm";
+    span.style.top = mm(DG.y) + "mm";
+    span.style.width = mm(DG.colWidth) + "mm";
     span.textContent = ch;
     layer.appendChild(span);
   });
+}
+
+// ===== 帳票の向きの切替 =====
+
+function readStampPosFields() {
+  const pos = {};
+  STAMP_POS_IDS.forEach(id => { pos[id] = Number(getField(id)) || 0; });
+  return pos;
+}
+
+function writeStampPosFields(pos) {
+  STAMP_POS_IDS.forEach(id => setField(id, Math.round(Number(pos[id]) || 0)));
+}
+
+// 明細の行数を向きの既定行数に合わせる(空行の追加と末尾の空行の削除のみ。入力済みの行は消さない)
+function fitItemsToRows() {
+  while (items.length < layout().rows) items.push(emptyItem());
+  items = trimTrailingEmptyRows(items);
+}
+
+function lastFilledItemCount() {
+  for (let i = items.length - 1; i >= 0; i--) {
+    if (!isEmptyItem(items[i])) return i + 1;
+  }
+  return 0;
+}
+
+function applyOrientationView() {
+  document.body.classList.toggle("orient-portrait", orientation === "portrait");
+  let style = document.getElementById("pageOrientationStyle");
+  if (!style) {
+    style = document.createElement("style");
+    style.id = "pageOrientationStyle";
+    document.head.appendChild(style);
+  }
+  style.textContent = `@media print { @page { size: A4 ${orientation}; margin: 0; } }`;
+  const sel = document.getElementById("orientation");
+  if (sel) sel.value = orientation;
+}
+
+// 向きを切り替える。押印位置は今の向きの位置を退避し、切替先の位置(未調整なら既定値)を入れる
+function setOrientation(next) {
+  if (LAYOUTS[next] && next !== orientation) {
+    stampPos[orientation] = readStampPosFields();
+    orientation = next;
+    writeStampPosFields(stampPos[next] || LAYOUTS[next].stampDefaults);
+    fitItemsToRows();
+  }
+  applyOrientationView();
+}
+
+// 読み込んだデータの向き・押印位置を復元する(fieldIds・items を反映した後に呼ぶ)。
+// 向きの情報が無い旧データは横の帳票で作られたもの: 押印位置を横の位置として引き継ぎ、既定の向きで開く。
+function restoreOrientation(data) {
+  stampPos = data.stampPos && typeof data.stampPos === "object" ? { ...data.stampPos } : {};
+  orientation = LAYOUTS[data.orientation] ? data.orientation : "landscape";
+  setOrientation(LAYOUTS[data.orientation] ? data.orientation : DEFAULT_ORIENTATION);
+  fitItemsToRows();
+}
+
+function onOrientationChange(e) {
+  const next = e.target.value;
+  if (next === "landscape" && lastFilledItemCount() > LAYOUTS.landscape.rows) {
+    if (!confirm(`A4横の帳票は明細${LAYOUTS.landscape.rows}行までです。${LAYOUTS.landscape.rows + 1}行目以降は枠の外に印字されます。A4横に切り替えますか?`)) {
+      e.target.value = orientation;
+      return;
+    }
+  }
+  setOrientation(next);
+  renderItemsInput();
+  renderPreview();
+  saveDraft();
 }
 
 function collectFormData() {
@@ -403,6 +641,8 @@ function collectFormData() {
   fieldIds.forEach(id => {
     data[id] = getField(id);
   });
+  data.orientation = orientation;
+  data.stampPos = { ...stampPos, [orientation]: readStampPosFields() };
   data.stampDataUrl  = stampDataUrl;
   data.stampDataUrl2 = stampDataUrl2;
   data.stampDataUrl3 = stampDataUrl3;
@@ -597,8 +837,8 @@ function openPrintPreview() {
   const data = collectFormData();
   data.items = items;
   const color = document.getElementById("themeColor").value;
-  document.getElementById("previewBgA").src = color === "blue" ? BG_BLUE_SRC() : BG_RED_SRC();
-  document.getElementById("previewBgB").src = color === "blue" ? BG_RED_SRC()  : BG_BLUE_SRC();
+  document.getElementById("previewBgA").src = bgSrc(color);
+  document.getElementById("previewBgB").src = bgSrc(color === "blue" ? "red" : "blue");
   buildOverlay(document.getElementById("previewLayerA"), data, true);
   buildOverlay(document.getElementById("previewLayerB"), data, false);
   buildAttachmentPages(document.getElementById("previewModal").querySelector(".preview-modal-body"));
@@ -749,7 +989,8 @@ function applyLoadedData(data) {
   stampDataUrl3 = data.stampDataUrl3 || null;
   stampDataUrl4 = data.stampDataUrl4 || null;
   attachments = Array.isArray(data.attachments) ? data.attachments : [];
-  items = Array.isArray(data.items) && data.items.length ? trimTrailingEmptyRows(data.items) : Array.from({ length: DEFAULT_ROWS }, emptyItem);
+  items = Array.isArray(data.items) && data.items.length ? trimTrailingEmptyRows(data.items) : [];
+  restoreOrientation(data);
   renderItemsInput();
   renderAttachmentList();
   renderPreview();
@@ -777,7 +1018,10 @@ async function openFromFile() {
 function loadDraft() {
   const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) {
-    items = Array.from({ length: DEFAULT_ROWS }, emptyItem);
+    orientation = DEFAULT_ORIENTATION;
+    writeStampPosFields(layout().stampDefaults);
+    applyOrientationView();
+    items = Array.from({ length: layout().rows }, emptyItem);
     setField("vendorQuoteDate", todayIso());
     setField("themeColor", "blue");
     renderItemsInput();
@@ -793,7 +1037,8 @@ function loadDraft() {
   stampDataUrl3 = data.stampDataUrl3 || null;
   stampDataUrl4 = data.stampDataUrl4 || null;
   attachments = Array.isArray(data.attachments) ? data.attachments : [];
-  items = Array.isArray(data.items) && data.items.length ? trimTrailingEmptyRows(data.items) : Array.from({ length: DEFAULT_ROWS }, emptyItem);
+  items = Array.isArray(data.items) && data.items.length ? trimTrailingEmptyRows(data.items) : [];
+  restoreOrientation(data);
   renderItemsInput();
   renderAttachmentList();
   renderPreview();
@@ -816,7 +1061,7 @@ function refreshModalPreview() {
 function onStampDragStart(e, dragLayer, xField, yField) {
   e.preventDefault();
   const rect = dragLayer.getBoundingClientRect();
-  const scale = rect.width / 1754; // 1754 = ページ幅(150dpi基準px)
+  const scale = rect.width / layout().pageW; // ページ幅(150dpi基準px): 横1754 / 縦1240
   const startClientX = e.clientX;
   const startClientY = e.clientY;
   const origX = Number(getField(xField)) || 0;
@@ -868,7 +1113,7 @@ function newQuotation() {
   stampDataUrl4 = keptStampDataUrl4;
 
   attachments = [];
-  items = Array.from({ length: DEFAULT_ROWS }, emptyItem);
+  items = Array.from({ length: layout().rows }, emptyItem);
   renderItemsInput();
   renderAttachmentList();
   renderPreview();
@@ -1134,6 +1379,7 @@ document.addEventListener("DOMContentLoaded", () => {
     applyLoadedData(JSON.parse(text));
     e.target.value = "";
   });
+  document.getElementById("orientation").addEventListener("change", onOrientationChange);
   document.getElementById("btnPrint").addEventListener("click", openPrintPreview);
   document.getElementById("btnClosePreview").addEventListener("click", closePrintPreview);
   document.getElementById("btnClosePreview2").addEventListener("click", closePrintPreview);

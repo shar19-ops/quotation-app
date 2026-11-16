@@ -9,7 +9,7 @@
 <body>
 
 <div class="toolbar no-print">
-  <h1>見積書入力アプリ(雄電社様式)</h1>
+  <h1>見積書入力アプリ(雄電社様式)<span class="beta-badge">β版 A4縦</span></h1>
   <div class="toolbar-buttons">
     <button id="btnNew">新規作成</button>
     <button id="btnSave">保存</button>
@@ -18,6 +18,12 @@
     <button id="btnOpenFile">ファイルを開く</button>
     <input type="file" id="fileInput" accept="application/json" style="display:none">
     <button id="btnPrint">プレビュー</button>
+    <label class="orientation-select">帳票の向き
+      <select id="orientation">
+        <option value="portrait">A4縦(β版)</option>
+        <option value="landscape">A4横(現行)</option>
+      </select>
+    </label>
   </div>
   <!-- themeColor は JS が参照するため非表示で保持 -->
   <select id="themeColor" style="display:none">
@@ -220,6 +226,8 @@
 <!-- 背景画像参照用: JSがsrcを読む。ビルド時にbase64へ変換される -->
 <img id="bgBlueSrc" src="assets/blue_bg.png" style="display:none" alt="">
 <img id="bgRedSrc"  src="assets/red_bg.png"  style="display:none" alt="">
+<img id="bgBluePortraitSrc" src="assets/blue_bg_portrait.png" style="display:none" alt="">
+<img id="bgRedPortraitSrc"  src="assets/red_bg_portrait.png"  style="display:none" alt="">
 
 <!-- PDF.js workerのbase64データ置き場: 開発版は空(JSが相対パスpdfjs/pdf.worker.min.jsを使用)。
      配布用ビルド時にテキストを埋め込み、JSがBlob化して使う(単一HTML化のため) -->
