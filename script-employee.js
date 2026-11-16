@@ -152,6 +152,7 @@ const PORTRAIT_COORDS = {
 };
 
 // 明細表(縦): build_portrait_template.py の TABLE と対応(mm)。入力15行 + 合計。
+// 列幅: 品名84・数量13・単位10・単価24・金額33・備考22(mm)
 // 単価・金額は桁の縦線・銭の欄が無いので、カンマ付きで右寄せ(字間なし)に印字する。
 const PORTRAIT_ITEMS_LAYOUT = (() => {
   const rowH = 6.2;
@@ -161,18 +162,18 @@ const PORTRAIT_ITEMS_LAYOUT = (() => {
     rowHeight: P(rowH),
     textOffset: P((rowH - 4.11) / 2 + 0.05),
     plainNumbers: true,
-    totalLabelCenter: P((12 + 101) / 2),
+    totalLabelCenter: P((12 + 96) / 2),
     cols: {
       name: P(13.6),
-      nameWidth: P(101 - 13.6 - 1.2),   // 品名の印字幅。超える場合は横方向に縮小
-      qtyRight: P(114 - pad),
+      nameWidth: P(96 - 13.6 - 1.2),    // 品名の印字幅。超える場合は横方向に縮小
+      qtyRight: P(109 - pad),
       qtyWidth: P(13 - pad * 2),
-      unitCenter: P(119),
+      unitCenter: P(114),
       unitWidth: P(10),
-      priceRight: P(148 - pad),
+      priceRight: P(143 - pad),
       priceWidth: P(24 - pad * 2),      // 〜9,999,999。超える場合は横方向に縮小
       amountRight: P(176 - pad),
-      amountWidth: P(28 - pad * 2),
+      amountWidth: P(33 - pad * 2),     // ¥1,234,567,890(10億円台)まで縮小なし
       remarks: P(177.4),
       remarksWidth: P(198 - 177.4 - 1)  // 備考の印字幅。超える場合は横方向に縮小
     }
