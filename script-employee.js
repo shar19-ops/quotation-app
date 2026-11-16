@@ -147,7 +147,7 @@ const PORTRAIT_COORDS = {
   vendorAddressY: textTopAt(46), vendorNameY: textTopAt(55), vendorTelY: textTopAt(64),
   vendorCodeCenter: P((157 + 198) / 2), vendorCodeWidth: P(38), vendorCodeY: textTopAt(80),
 
-  // 註記(最大8行)
+  // 注記(最大5行)
   notes: { x: P(15), y: P(231) }
 };
 
@@ -203,19 +203,19 @@ const LAYOUTS = {
     portraitHeader: true,
     items: PORTRAIT_ITEMS_LAYOUT,
     rows: 15,
-    notesMaxLines: 8,
-    staffStampCenter: { x: P(12 + 23 * 3 + 11.5), y: P(279) }, // 社内確認用の押印枠(4つ横並び)の右端
+    notesMaxLines: 5,
+    staffStampCenter: { x: P(12 + 23 * 3 + 11.5), y: P(257 + 11.5) }, // 社内確認用の押印枠(4つ横並び・23mm角)の右端
     bg: {
       blue: () => document.getElementById("bgBluePortraitSrc").src,
       red:  () => document.getElementById("bgRedPortraitSrc").src
     },
-    // 担当者印①②③は業者担当者印の3マス(右から①②③、中心 x 190.5/175.5/160.5mm・y 98mm、サイズ50px)、
+    // 担当者印①②③は業者担当者印の3マス(右から①②③、中心 x 190.5/175.5/160.5mm・y 97.5mm、サイズ50px)、
     // 社判(サイズ110px)は社名の行の右端寄り(中心 186mm, 58mm。住所に掛からない位置)
     stampDefaults: {
       stampX4: Math.round(P(186) - 55), stampY4: Math.round(P(58) - 55),
-      stampX: Math.round(P(190.5) - 25), stampY: Math.round(P(98) - 25),
-      stampX2: Math.round(P(175.5) - 25), stampY2: Math.round(P(98) - 25),
-      stampX3: Math.round(P(160.5) - 25), stampY3: Math.round(P(98) - 25)
+      stampX: Math.round(P(190.5) - 25), stampY: Math.round(P(97.5) - 25),
+      stampX2: Math.round(P(175.5) - 25), stampY2: Math.round(P(97.5) - 25),
+      stampX3: Math.round(P(160.5) - 25), stampY3: Math.round(P(97.5) - 25)
     }
   }
 };
@@ -597,7 +597,7 @@ function buildOverlay(layer, data) {
     span.className = "ov ov-notes";
     span.style.left = mm(C.notes.x) + "mm";
     span.style.top = mm(C.notes.y) + "mm";
-    span.textContent = data.notes;
+    span.textContent = data.notes.split("\n").slice(0, L.notesMaxLines).join("\n");
     layer.appendChild(span);
   }
 

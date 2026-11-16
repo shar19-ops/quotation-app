@@ -5,7 +5,7 @@
 
 - 配置は「見積書レイアウト参考.pdf」(雄電社の御見積書)に合わせている:
   上段左に宛名・見積総額(下線+大きな数字)・工事情報(下線の行)、上段右に業者見積日/番号・業者情報・
-  業者コード・業者担当者印、下段に明細表(15行+合計)・註記欄・社内確認用の押印枠4つ。
+  業者コード・業者担当者印、下段に明細表(15行+合計)・注記欄(5行)・社内確認用の押印枠4つ(正方形)。
 - タイトル「見 積 書」、社名ロゴ「株式会社 雄電社 御中」、「下記の通りお見積り申し上げます。」は
   A4横の帳票(assets/{blue,red}_bg.png)から切り出して使う。それ以外の文字・罫線はここで描く。
 - 座標はすべて mm。アプリ側(script.js / script-employee.js の PORTRAIT_*)の印字位置も同じ mm の値で
@@ -62,7 +62,7 @@ VENDOR_LABELS = [(112, 46, "住　所"), (112, 55, "社　名"), (112, 64, "電�
 CODE_BOX = (140, 76, 198, 84)  # 業者コード枠 (x0, y0, x1, y1)
 CODE_LABEL_X1 = 157
 STAFF_LABEL_Y = 88
-STAFF_BOXES = (153, 90, 198, 106)  # 業者担当者印 3マス
+STAFF_BOXES = (153, 90, 198, 105)  # 業者担当者印 3マス(15mm角)
 
 # 明細表
 TABLE = {
@@ -78,8 +78,8 @@ TABLE = {
 }
 TABLE["bottom"] = TABLE["top"] + TABLE["header_h"] + TABLE["row_h"] * TABLE["rows"]
 
-NOTES_BOX = (12, 225, 198, 266)
-CONFIRM_BOXES = {"left": 12, "top": 270, "w": 23, "h": 18, "count": 4}
+NOTES_BOX = (12, 225, 198, 253)  # 注記欄(5行)
+CONFIRM_BOXES = {"left": 12, "top": 257, "w": 23, "h": 23, "count": 4}  # 社内確認用の押印枠(23mm角)
 
 
 def build(color_name):
@@ -176,10 +176,10 @@ def build(color_name):
         text((cx0 + cx1) / 2, top + hh / 2, label, size=3.6, anchor="mm")
     d.rectangle([px(t["left"]) - 2, px(top) - 2, px(t["right"]) + 1, px(t["bottom"]) + 1], outline=ink, width=4)
 
-    # 註記欄
+    # 注記欄
     nx0, ny0, nx1, ny1 = NOTES_BOX
     d.rectangle([px(nx0) - 1, px(ny0) - 1, px(nx1), px(ny1)], outline=ink, width=3)
-    text(nx0 + 2, ny0 + 3, "註　記", size=3.6)
+    text(nx0 + 2, ny0 + 3, "注　記", size=3.6)
 
     # 社内確認用の押印枠(4つ横並び)
     c = CONFIRM_BOXES
