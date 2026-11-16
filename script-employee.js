@@ -113,86 +113,68 @@ const ITEMS_LAYOUT = {
 };
 
 // ===== 帳票の向き(A4横=現行 / A4縦=β版) =====
-// A4縦の帳票(assets/*_bg_portrait.png)は templates/portrait/build_portrait_template.py で
-// A4横の帳票から部品を切り出して組み立てている。縦の座標は「横の座標 + 部品の移動量」で計算する
-// (移動量は同スクリプトの PLACE の値。200dpi px の移動量 × 0.75 = 150dpi px)。
+// A4縦の帳票(assets/*_bg_portrait.png)は templates/portrait/build_portrait_template.py で生成している
+// (配置は「見積書レイアウト参考.pdf」に合わせた)。縦の印字位置は同スクリプトと同じ mm の値で定義する。
 const DEFAULT_ORIENTATION = "portrait"; // β版は縦が既定。承認前の本番(main)は横のまま
 
-// 横の座標(px@150)を、部品の移動量(px@200)だけずらす
-function shiftPt(pt, dx200, dy200) {
-  return { x: pt.x + dx200 * 0.75, y: pt.y + dy200 * 0.75 };
-}
+// mm → 150dpi基準px
+const P = (mmValue) => mmValue / PX2MM;
+// 中心 y(mm) に文字(既定4.11mm)の中心を合わせたときの、文字の上端(px)
+const textTopAt = (centerMm, fontMm = 4.11) => P(centerMm - fontMm / 2);
 
-const PORTRAIT_COORDS = (() => {
-  const C = COORDS;
-  const QUOTE = [-646, -37];   // 業者見積日・番号
-  const PROJECT = [-50, -35];  // 本支店区分〜見積有効期限
-  const VENDOR = [-1422, 263]; // 住所・社名・電話
-  const CODE = [-651, 30];     // 業者コード・業者担当者印
-  return {
-    vendorQuoteDate_y: shiftPt(C.vendorQuoteDate_y, ...QUOTE),
-    vendorQuoteDate_m: shiftPt(C.vendorQuoteDate_m, ...QUOTE),
-    vendorQuoteDate_d: shiftPt(C.vendorQuoteDate_d, ...QUOTE),
-    vendorQuoteNo:     shiftPt(C.vendorQuoteNo, ...QUOTE),
-    vendorQuoteNoCenter: C.vendorQuoteNoCenter + QUOTE[0] * 0.75,
+const PORTRAIT_COORDS = {
+  // 業者見積日: 「年」「月」「日」の手前に右寄せ / 業者見積番号: 「第」と「号」の間の中央
+  quoteDateY: textTopAt(27.5),
+  quoteDateRights: [P(160), P(172), P(184)],
+  quoteNoY: textTopAt(35), quoteNoCenter: P(171.3), quoteNoWidth: P(42),
 
-    branchCode:   shiftPt(C.branchCode, ...PROJECT),
-    branchName:   shiftPt(C.branchName, ...PROJECT),
-    projectNo:    shiftPt(C.projectNo, ...PROJECT),
-    projectNoCenter: C.projectNoCenter + PROJECT[0] * 0.75,
-    projectNoWidth: C.projectNoWidth,
-    projectName:  shiftPt(C.projectName, ...PROJECT),
-    siteLocation: shiftPt(C.siteLocation, ...PROJECT),
+  // 見積総額(税抜): 大きな数字(7mm)を「円」の手前に右寄せ / 法定福利費相当額: 「円を含む。)」の手前に右寄せ
+  totalRight: P(101), totalWidth: P(55), totalY: textTopAt(48.5, 7),
+  welfareRight: P(78), welfareY: textTopAt(57.5),
 
-    period_y1: shiftPt(C.period_y1, ...PROJECT),
-    period_m1: shiftPt(C.period_m1, ...PROJECT),
-    period_d1: shiftPt(C.period_d1, ...PROJECT),
-    period_y2: shiftPt(C.period_y2, ...PROJECT),
-    period_m2: shiftPt(C.period_m2, ...PROJECT),
-    period_d2: shiftPt(C.period_d2, ...PROJECT),
+  // 工事情報(下線の行): 値は「：」の後ろ(42mm)から下線の右端(120mm)まで
+  valueX: P(42), valueWidth: P(120 - 42 - 1),
+  branchY: textTopAt(66.4), branchNameX: P(52),
+  projectNoY: textTopAt(74.4),
+  projectNameY: textTopAt(82.4),
+  siteLocationY: textTopAt(90.4),
+  periodY: textTopAt(98.4),
+  periodRights: [P(52), P(62), P(72), P(91), P(101), P(111)], // 年・月・日 ～ 年・月・日 の手前
+  validDaysY: textTopAt(106.4), validDaysRight: P(71),
 
-    validDays: shiftPt(C.validDays, ...PROJECT),
+  // 業者情報(住所・社名・電話は 135mm から右端まで。長い場合は横方向に縮小)
+  vendorX: P(135), vendorWidth: P(198 - 135 - 1),
+  vendorAddressY: textTopAt(46), vendorNameY: textTopAt(54), vendorTelY: textTopAt(62),
+  vendorCodeCenter: P((157 + 198) / 2), vendorCodeWidth: P(38), vendorCodeY: textTopAt(72),
 
-    vendorAddress: shiftPt(C.vendorAddress, ...VENDOR),
-    vendorName:    shiftPt(C.vendorName, ...VENDOR),
-    vendorTel:     shiftPt(C.vendorTel, ...VENDOR),
-    vendorTextWidth: 600, // 住所・社名・電話の印字幅(px@150)。超える場合は横方向に縮小
-    vendorCode:    shiftPt(C.vendorCode, ...CODE),
-    vendorCodeCenter: C.vendorCodeCenter + CODE[0] * 0.75,
-    vendorCodeWidth: C.vendorCodeWidth,
+  // 註記(最大8行)
+  notes: { x: P(15), y: P(231) }
+};
 
-    // 法定福利費: 部品を0.8倍に縮小して見積総額の右に配置(1040,895 px@200)
-    // (横の印字位置1389px@200 は切り出し元の左端1135から254px → 縮小後203px。縦位置は文字の中心を合わせる)
-    welfareCost: { x: (1040 + (1389.3 - 1135) * 0.8) * 0.75, y: 674 },
-
-    // 註記: 「-次葉に続く- 註記」の下(846,2155 px@200)
-    notes: { x: 846 * 0.75, y: 2155 * 0.75 }
-  };
-})();
-
-// 明細表(縦): build_portrait_template.py の TABLE と対応(px@200 × 0.75)。
+// 明細表(縦): build_portrait_template.py の TABLE と対応(mm)。入力15行 + 合計。
 // 単価・金額は桁の縦線・銭の欄が無いので、カンマ付きで右寄せ(字間なし)に印字する。
 const PORTRAIT_ITEMS_LAYOUT = (() => {
-  const rowH = 49.5;
-  const pad = 14; // 罫線から数字までの余白(px@200)
+  const rowH = 6.2;
+  const pad = 1.6; // 罫線から数字までの余白(mm)
   return {
-    rowTop: (1000 + 55) * 0.75,
-    rowHeight: rowH * 0.75,
-    textOffset: (rowH * 0.75 - 4.11 / PX2MM) / 2 + 0.5,
+    rowTop: P(114 + 8),
+    rowHeight: P(rowH),
+    textOffset: P((rowH - 4.11) / 2 + 0.05),
     plainNumbers: true,
+    totalLabelCenter: P((12 + 101) / 2),
     cols: {
-      name: (94 + 28) * 0.75,
-      nameWidth: (796 - 12 - 122) * 0.75,        // 品名の印字幅。超える場合は横方向に縮小
-      qtyRight: (898 - pad) * 0.75,
-      qtyWidth: 70,
-      unitCenter: (898 + 977) / 2 * 0.75,
-      unitWidth: 55,
-      priceRight: (1166 - pad) * 0.75,
-      priceWidth: (1166 - 977 - pad * 2) * 0.75, // 〜9,999,999。超える場合は横方向に縮小
-      amountRight: (1386 - pad) * 0.75,
-      amountWidth: (1386 - 1166 - pad * 2) * 0.75,
-      remarks: (1386 + 14) * 0.75,
-      remarksWidth: (1559 - 8 - 1386 - 14) * 0.75 // 備考の印字幅。超える場合は横方向に縮小
+      name: P(13.6),
+      nameWidth: P(101 - 13.6 - 1.2),   // 品名の印字幅。超える場合は横方向に縮小
+      qtyRight: P(114 - pad),
+      qtyWidth: P(13 - pad * 2),
+      unitCenter: P(119),
+      unitWidth: P(10),
+      priceRight: P(148 - pad),
+      priceWidth: P(24 - pad * 2),      // 〜9,999,999。超える場合は横方向に縮小
+      amountRight: P(176 - pad),
+      amountWidth: P(28 - pad * 2),
+      remarks: P(177.4),
+      remarksWidth: P(198 - 177.4 - 1)  // 備考の印字幅。超える場合は横方向に縮小
     }
   };
 })();
@@ -204,6 +186,7 @@ const LAYOUTS = {
     digitGrid: DIGIT_GRID,
     items: ITEMS_LAYOUT,
     rows: 9,
+    notesMaxLines: 4,
     staffStampCenter: STAFF_STAMP_CENTER,
     bg: { blue: () => BG_BLUE_SRC(), red: () => BG_RED_SRC() },
     stampDefaults: {
@@ -216,19 +199,22 @@ const LAYOUTS = {
   portrait: {
     pageW: 1240, pageH: 1754,
     coords: PORTRAIT_COORDS,
-    digitGrid: { x0: DIGIT_GRID.x0 - 50 * 0.75, colWidth: DIGIT_GRID.colWidth, y: DIGIT_GRID.y + 201 * 0.75 },
+    portraitHeader: true,
     items: PORTRAIT_ITEMS_LAYOUT,
-    rows: 20,
-    staffStampCenter: shiftPt(STAFF_STAMP_CENTER, -50, 665),
+    rows: 15,
+    notesMaxLines: 8,
+    staffStampCenter: { x: P(12 + 23 * 3 + 11.5), y: P(279) }, // 社内確認用の押印枠(4つ横並び)の右端
     bg: {
       blue: () => document.getElementById("bgBluePortraitSrc").src,
       red:  () => document.getElementById("bgRedPortraitSrc").src
     },
+    // 担当者印①②③は業者担当者印の3マス(右から①②③、中心 x 190.5/175.5/160.5mm・y 90mm、サイズ50px)、
+    // 社判(サイズ110px)は社名の行の右端寄り(中心 186mm, 59mm。住所に掛からない位置)
     stampDefaults: {
-      stampX4: 600, stampY4: 505,
-      stampX: 1586 - 651 * 0.75, stampY: 538 + 30 * 0.75,
-      stampX2: 1497 - 651 * 0.75, stampY2: 538 + 30 * 0.75,
-      stampX3: 1410 - 651 * 0.75, stampY3: 538 + 30 * 0.75
+      stampX4: Math.round(P(186) - 55), stampY4: Math.round(P(59) - 55),
+      stampX: Math.round(P(190.5) - 25), stampY: Math.round(P(90) - 25),
+      stampX2: Math.round(P(175.5) - 25), stampY2: Math.round(P(90) - 25),
+      stampX3: Math.round(P(160.5) - 25), stampY3: Math.round(P(90) - 25)
     }
   }
 };
@@ -518,6 +504,32 @@ function renderAltPreview() {
   buildOverlay(document.getElementById("overlayLayerAlt"), data);
 }
 
+// 縦の帳票の上段(業者見積日・番号、工事情報、業者情報、法定福利費)を印字する
+function buildPortraitHeader(layer, data, C) {
+  const qd = splitDate(data.vendorQuoteDate);
+  [qd.y, qd.m, qd.d].forEach((v, i) => addOverlayRight(layer, C.quoteDateRights[i], P(14), C.quoteDateY, v));
+  addOverlayFit(layer, C.quoteNoCenter, C.quoteNoWidth, C.quoteNoY, data.vendorQuoteNo);
+
+  const [branchName, branchCode] = data.branchType ? data.branchType.split("|") : ["", ""];
+  addOverlay(layer, C.valueX, C.branchY, branchCode || "");
+  addOverlay(layer, C.branchNameX, C.branchY, branchName || "");
+  addOverlayFitLeft(layer, C.valueX, C.valueWidth, C.projectNoY, data.projectNo);
+  addOverlayFitLeft(layer, C.valueX, C.valueWidth, C.projectNameY, data.projectName);
+  addOverlayFitLeft(layer, C.valueX, C.valueWidth, C.siteLocationY, data.siteLocation);
+
+  const ps = splitDate(data.periodStart);
+  const pe = splitDate(data.periodEnd);
+  [ps.y, ps.m, ps.d, pe.y, pe.m, pe.d].forEach((v, i) => addOverlayRight(layer, C.periodRights[i], P(14), C.periodY, v));
+  addOverlayRight(layer, C.validDaysRight, P(14), C.validDaysY, data.validDays);
+
+  addOverlayFitLeft(layer, C.vendorX, C.vendorWidth, C.vendorAddressY, data.vendorAddress);
+  addOverlayFitLeft(layer, C.vendorX, C.vendorWidth, C.vendorNameY, data.vendorName);
+  addOverlayFitLeft(layer, C.vendorX, C.vendorWidth, C.vendorTelY, data.vendorTel);
+  addOverlayFit(layer, C.vendorCodeCenter, C.vendorCodeWidth, C.vendorCodeY, data.vendorCode);
+
+  addOverlayRight(layer, C.welfareRight, P(30), C.welfareY, data.welfareCost ? yen(data.welfareCost) : "");
+}
+
 // 業者情報(印影含む)は社員側では編集不可のため、ドラッグ機能は持たない
 function buildOverlay(layer, data) {
   layer.innerHTML = "";
@@ -526,35 +538,39 @@ function buildOverlay(layer, data) {
   const IL = L.items;
   const DG = L.digitGrid;
 
-  const qd = splitDate(data.vendorQuoteDate);
-  addOverlay(layer, C.vendorQuoteDate_y.x, C.vendorQuoteDate_y.y, qd.y);
-  addOverlay(layer, C.vendorQuoteDate_m.x, C.vendorQuoteDate_m.y, qd.m);
-  addOverlay(layer, C.vendorQuoteDate_d.x, C.vendorQuoteDate_d.y, qd.d);
-  addOverlayCenter(layer, C.vendorQuoteNoCenter, 160, C.vendorQuoteNo.y, data.vendorQuoteNo);
+  if (L.portraitHeader) {
+    buildPortraitHeader(layer, data, C);
+  } else {
+    const qd = splitDate(data.vendorQuoteDate);
+    addOverlay(layer, C.vendorQuoteDate_y.x, C.vendorQuoteDate_y.y, qd.y);
+    addOverlay(layer, C.vendorQuoteDate_m.x, C.vendorQuoteDate_m.y, qd.m);
+    addOverlay(layer, C.vendorQuoteDate_d.x, C.vendorQuoteDate_d.y, qd.d);
+    addOverlayCenter(layer, C.vendorQuoteNoCenter, 160, C.vendorQuoteNo.y, data.vendorQuoteNo);
 
-  const [branchName, branchCode] = data.branchType ? data.branchType.split("|") : ["", ""];
-  addOverlay(layer, C.branchCode.x, C.branchCode.y, branchCode || "");
-  addOverlay(layer, C.branchName.x, C.branchName.y, branchName || "");
+    const [branchName, branchCode] = data.branchType ? data.branchType.split("|") : ["", ""];
+    addOverlay(layer, C.branchCode.x, C.branchCode.y, branchCode || "");
+    addOverlay(layer, C.branchName.x, C.branchName.y, branchName || "");
 
-  addOverlayFit(layer, C.projectNoCenter, C.projectNoWidth, C.projectNo.y, data.projectNo);
-  addOverlay(layer, C.projectName.x, C.projectName.y, data.projectName);
-  addOverlay(layer, C.siteLocation.x, C.siteLocation.y, data.siteLocation);
+    addOverlayFit(layer, C.projectNoCenter, C.projectNoWidth, C.projectNo.y, data.projectNo);
+    addOverlay(layer, C.projectName.x, C.projectName.y, data.projectName);
+    addOverlay(layer, C.siteLocation.x, C.siteLocation.y, data.siteLocation);
 
-  const ps = splitDate(data.periodStart);
-  const pe = splitDate(data.periodEnd);
-  addOverlay(layer, C.period_y1.x, C.period_y1.y, ps.y);
-  addOverlay(layer, C.period_m1.x, C.period_m1.y, ps.m);
-  addOverlay(layer, C.period_d1.x, C.period_d1.y, ps.d);
-  addOverlay(layer, C.period_y2.x, C.period_y2.y, pe.y);
-  addOverlay(layer, C.period_m2.x, C.period_m2.y, pe.m);
-  addOverlay(layer, C.period_d2.x, C.period_d2.y, pe.d);
+    const ps = splitDate(data.periodStart);
+    const pe = splitDate(data.periodEnd);
+    addOverlay(layer, C.period_y1.x, C.period_y1.y, ps.y);
+    addOverlay(layer, C.period_m1.x, C.period_m1.y, ps.m);
+    addOverlay(layer, C.period_d1.x, C.period_d1.y, ps.d);
+    addOverlay(layer, C.period_y2.x, C.period_y2.y, pe.y);
+    addOverlay(layer, C.period_m2.x, C.period_m2.y, pe.m);
+    addOverlay(layer, C.period_d2.x, C.period_d2.y, pe.d);
 
-  addOverlay(layer, C.validDays.x, C.validDays.y, data.validDays);
+    addOverlay(layer, C.validDays.x, C.validDays.y, data.validDays);
 
-  addOverlayMaybeFit(layer, C.vendorAddress.x, C.vendorTextWidth, C.vendorAddress.y, data.vendorAddress);
-  addOverlayMaybeFit(layer, C.vendorName.x, C.vendorTextWidth, C.vendorName.y, data.vendorName);
-  addOverlayMaybeFit(layer, C.vendorTel.x, C.vendorTextWidth, C.vendorTel.y, data.vendorTel);
-  addOverlayCenter(layer, C.vendorCodeCenter, C.vendorCodeWidth, C.vendorCode.y, data.vendorCode);
+    addOverlayMaybeFit(layer, C.vendorAddress.x, C.vendorTextWidth, C.vendorAddress.y, data.vendorAddress);
+    addOverlayMaybeFit(layer, C.vendorName.x, C.vendorTextWidth, C.vendorName.y, data.vendorName);
+    addOverlayMaybeFit(layer, C.vendorTel.x, C.vendorTextWidth, C.vendorTel.y, data.vendorTel);
+    addOverlayCenter(layer, C.vendorCodeCenter, C.vendorCodeWidth, C.vendorCode.y, data.vendorCode);
+  }
 
   [
     { url: stampDataUrl4, xf: "stampX4", yf: "stampY4", sf: "stampSize4" },
@@ -573,7 +589,7 @@ function buildOverlay(layer, data) {
     layer.appendChild(img);
   });
 
-  addOverlay(layer, C.welfareCost.x, C.welfareCost.y, data.welfareCost ? yen(data.welfareCost) : "");
+  if (!L.portraitHeader) addOverlay(layer, C.welfareCost.x, C.welfareCost.y, data.welfareCost ? yen(data.welfareCost) : "");
 
   if (data.notes) {
     const span = document.createElement("span");
@@ -611,7 +627,8 @@ function buildOverlay(layer, data) {
   }
 
   const totalRowY = IL.totalRowY !== undefined ? IL.totalRowY : IL.rowTop + L.rows * IL.rowHeight + IL.textOffset;
-  addOverlay(layer, IL.cols.name, totalRowY, "合計");
+  if (IL.totalLabelCenter) addOverlayCenter(layer, IL.totalLabelCenter, P(40), totalRowY, "合　計");
+  else addOverlay(layer, IL.cols.name, totalRowY, "合計");
   if (IL.plainNumbers) {
     addOverlayFitRight(layer, IL.cols.amountRight, IL.cols.amountWidth, totalRowY, "¥" + yen(subtotal));
   } else {
@@ -622,22 +639,26 @@ function buildOverlay(layer, data) {
     addOverlayRight(layer, totalYenRightX, 30, totalRowY, "¥", "ov-amount");
   }
 
-  const digits = digitGridDigits(subtotal);
-  const firstDigitIndex = digits.findIndex(ch => ch.trim() !== "");
-  const yenRightX = (firstDigitIndex === -1 ? DG.x0 + DG.colWidth * (digits.length - 1) : DG.x0 + firstDigitIndex * DG.colWidth) - 4;
-  addOverlayRight(layer, yenRightX, DG.colWidth, DG.y, "¥", "ov-digit");
+  if (L.portraitHeader) {
+    addOverlayRight(layer, C.totalRight, C.totalWidth, C.totalY, yen(subtotal), "ov-total");
+  } else {
+    const digits = digitGridDigits(subtotal);
+    const firstDigitIndex = digits.findIndex(ch => ch.trim() !== "");
+    const yenRightX = (firstDigitIndex === -1 ? DG.x0 + DG.colWidth * (digits.length - 1) : DG.x0 + firstDigitIndex * DG.colWidth) - 4;
+    addOverlayRight(layer, yenRightX, DG.colWidth, DG.y, "¥", "ov-digit");
 
-  digits.forEach((ch, i) => {
-    if (ch.trim() === "") return;
-    const x = DG.x0 + i * DG.colWidth;
-    const span = document.createElement("span");
-    span.className = "ov ov-digit";
-    span.style.left = mm(x) + "mm";
-    span.style.top = mm(DG.y) + "mm";
-    span.style.width = mm(DG.colWidth) + "mm";
-    span.textContent = ch;
-    layer.appendChild(span);
-  });
+    digits.forEach((ch, i) => {
+      if (ch.trim() === "") return;
+      const x = DG.x0 + i * DG.colWidth;
+      const span = document.createElement("span");
+      span.className = "ov ov-digit";
+      span.style.left = mm(x) + "mm";
+      span.style.top = mm(DG.y) + "mm";
+      span.style.width = mm(DG.colWidth) + "mm";
+      span.textContent = ch;
+      layer.appendChild(span);
+    });
+  }
 
   addStaffStamp(layer);
 }
@@ -831,6 +852,9 @@ function closeAttachmentView() {
 }
 
 function openPrintPreview() {
+  if (orientation === "portrait" && lastFilledItemCount() > layout().rows) {
+    alert(`A4縦の帳票は明細${layout().rows}行までです。${layout().rows + 1}行目以降は印刷されません(合計金額には含まれます)。\n明細が多い場合は別紙を添付し、品名に「別紙参照」と記載してください。`);
+  }
   renderPreview();
   const data = collectFormData();
   data.items = items;

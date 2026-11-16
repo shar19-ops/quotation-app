@@ -723,6 +723,12 @@ legend {
   height: 297mm;
 }
 
+/* 縦の帳票の見積総額(下線の上に大きく印字) */
+.ov.ov-total {
+  font-size: 7mm;
+  font-weight: bold;
+}
+
 /* 添付は横向きに回転して保存しているため、縦の帳票では90°戻して表示する */
 .orient-portrait .attachment-page img {
   position: absolute;
