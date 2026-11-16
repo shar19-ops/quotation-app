@@ -38,8 +38,8 @@ TITLE_TOP = 13
 TOTAL = {"label": (13, 48.5), "line_y": 52.5, "line_x": (12, 108), "yen": (102.5, 48.5)}
 WELFARE = {"y": 57.5, "left": 15, "right_text_x": 79}
 
-# 左: 工事情報(下線の行)。各行は下線の y と項目名
-PROJECT_X = (12, 120)
+# 左: 工事情報(下線の行)。幅は見積総額の下線と同じ。各行は下線の y と項目名
+PROJECT_X = (12, 108)
 PROJECT_LABEL_X = 13
 PROJECT_ROWS = [  # (下線 y, 項目名)
     (69, "本支店区分"),
@@ -49,19 +49,20 @@ PROJECT_ROWS = [  # (下線 y, 項目名)
     (101, "工　　期"),
     (109, "見積有効期限"),
 ]
-PERIOD_MARKS = [(52.4, "年"), (62.4, "月"), (72.4, "日"), (76.5, "～"), (91.4, "年"), (101.4, "月"), (111.4, "日")]
+PERIOD_MARKS = [(51.4, "年"), (59.9, "月"), (68.4, "日"), (73, "～"), (86.9, "年"), (95.4, "月"), (103.9, "日")]
 VALID_MARKS = [(42, "見積日より"), (71.4, "日間")]
 
-# 右上: 業者見積日・番号
-QUOTE_DATE = {"label": (124, 27.5), "marks": [(161, "年"), (173, "月"), (185, "日")]}
-QUOTE_NO = {"label": (124, 35), "dai": 145.5, "go": 193.5}
+# 右上: 業者見積日・番号(項目名は業者情報と同じ 112mm にそろえる)
+QUOTE_DATE = {"label": (112, 27.5), "marks": [(161, "年"), (173, "月"), (185, "日")]}
+QUOTE_NO = {"label": (112, 35), "dai": 135, "go": 193.5}
+QUOTE_LINE_X = (134, 198)
 
-# 右: 業者情報
-VENDOR_LABELS = [(124, 46, "住　所"), (124, 54, "社　名"), (124, 62, "電　話")]
-CODE_BOX = (140, 68, 198, 76)  # 業者コード枠 (x0, y0, x1, y1)
+# 右: 業者情報(住所・社名・電話は 123mm から右端まで)
+VENDOR_LABELS = [(112, 46, "住　所"), (112, 55, "社　名"), (112, 64, "電　話")]
+CODE_BOX = (140, 76, 198, 84)  # 業者コード枠 (x0, y0, x1, y1)
 CODE_LABEL_X1 = 157
-STAFF_LABEL_Y = 80
-STAFF_BOXES = (153, 82, 198, 98)  # 業者担当者印 3マス
+STAFF_LABEL_Y = 88
+STAFF_BOXES = (153, 90, 198, 106)  # 業者担当者印 3マス
 
 # 明細表
 TABLE = {
@@ -142,11 +143,11 @@ def build(color_name):
     text(*QUOTE_DATE["label"], "業者見積日", size=3.0)
     for x, s in QUOTE_DATE["marks"]:
         text(x, QUOTE_DATE["label"][1], s, size=3.6)
-    hline(146, 198, QUOTE_DATE["label"][1] + 2.6)
+    hline(*QUOTE_LINE_X, QUOTE_DATE["label"][1] + 2.6)
     text(*QUOTE_NO["label"], "業者見積番号", size=3.0)
     text(QUOTE_NO["dai"], QUOTE_NO["label"][1], "第", size=3.6)
     text(QUOTE_NO["go"], QUOTE_NO["label"][1], "号", size=3.6)
-    hline(146, 198, QUOTE_NO["label"][1] + 2.6)
+    hline(*QUOTE_LINE_X, QUOTE_NO["label"][1] + 2.6)
 
     # 業者情報
     for x, y, s in VENDOR_LABELS:

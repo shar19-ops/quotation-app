@@ -126,26 +126,26 @@ const PORTRAIT_COORDS = {
   // 業者見積日: 「年」「月」「日」の手前に右寄せ / 業者見積番号: 「第」と「号」の間の中央
   quoteDateY: textTopAt(27.5),
   quoteDateRights: [P(160), P(172), P(184)],
-  quoteNoY: textTopAt(35), quoteNoCenter: P(171.3), quoteNoWidth: P(42),
+  quoteNoY: textTopAt(35), quoteNoCenter: P(166), quoteNoWidth: P(50),
 
   // 見積総額(税抜): 大きな数字(7mm)を「円」の手前に右寄せ / 法定福利費相当額: 「円を含む。)」の手前に右寄せ
   totalRight: P(101), totalWidth: P(55), totalY: textTopAt(48.5, 7),
   welfareRight: P(78), welfareY: textTopAt(57.5),
 
-  // 工事情報(下線の行): 値は「：」の後ろ(42mm)から下線の右端(120mm)まで
-  valueX: P(42), valueWidth: P(120 - 42 - 1),
+  // 工事情報(下線の行。幅は見積総額と同じ): 値は「：」の後ろ(42mm)から下線の右端(108mm)まで
+  valueX: P(42), valueWidth: P(108 - 42 - 1),
   branchY: textTopAt(66.4), branchNameX: P(52),
   projectNoY: textTopAt(74.4),
   projectNameY: textTopAt(82.4),
   siteLocationY: textTopAt(90.4),
   periodY: textTopAt(98.4),
-  periodRights: [P(52), P(62), P(72), P(91), P(101), P(111)], // 年・月・日 ～ 年・月・日 の手前
+  periodRights: [P(51), P(59.5), P(68), P(86.5), P(95), P(103.5)], // 年・月・日 ～ 年・月・日 の手前
   validDaysY: textTopAt(106.4), validDaysRight: P(71),
 
-  // 業者情報(住所・社名・電話は 135mm から右端まで。長い場合は横方向に縮小)
-  vendorX: P(135), vendorWidth: P(198 - 135 - 1),
-  vendorAddressY: textTopAt(46), vendorNameY: textTopAt(54), vendorTelY: textTopAt(62),
-  vendorCodeCenter: P((157 + 198) / 2), vendorCodeWidth: P(38), vendorCodeY: textTopAt(72),
+  // 業者情報(住所・社名・電話は 123mm から右端まで。長い場合は横方向に縮小)
+  vendorX: P(123), vendorWidth: P(198 - 123 - 1),
+  vendorAddressY: textTopAt(46), vendorNameY: textTopAt(55), vendorTelY: textTopAt(64),
+  vendorCodeCenter: P((157 + 198) / 2), vendorCodeWidth: P(38), vendorCodeY: textTopAt(80),
 
   // 註記(最大8行)
   notes: { x: P(15), y: P(231) }
@@ -209,13 +209,13 @@ const LAYOUTS = {
       blue: () => document.getElementById("bgBluePortraitSrc").src,
       red:  () => document.getElementById("bgRedPortraitSrc").src
     },
-    // 担当者印①②③は業者担当者印の3マス(右から①②③、中心 x 190.5/175.5/160.5mm・y 90mm、サイズ50px)、
-    // 社判(サイズ110px)は社名の行の右端寄り(中心 186mm, 59mm。住所に掛からない位置)
+    // 担当者印①②③は業者担当者印の3マス(右から①②③、中心 x 190.5/175.5/160.5mm・y 98mm、サイズ50px)、
+    // 社判(サイズ110px)は社名の行の右端寄り(中心 186mm, 58mm。住所に掛からない位置)
     stampDefaults: {
-      stampX4: Math.round(P(186) - 55), stampY4: Math.round(P(59) - 55),
-      stampX: Math.round(P(190.5) - 25), stampY: Math.round(P(90) - 25),
-      stampX2: Math.round(P(175.5) - 25), stampY2: Math.round(P(90) - 25),
-      stampX3: Math.round(P(160.5) - 25), stampY3: Math.round(P(90) - 25)
+      stampX4: Math.round(P(186) - 55), stampY4: Math.round(P(58) - 55),
+      stampX: Math.round(P(190.5) - 25), stampY: Math.round(P(98) - 25),
+      stampX2: Math.round(P(175.5) - 25), stampY2: Math.round(P(98) - 25),
+      stampX3: Math.round(P(160.5) - 25), stampY3: Math.round(P(98) - 25)
     }
   }
 };
