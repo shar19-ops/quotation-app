@@ -142,30 +142,29 @@ const PORTRAIT_COORDS = (() => {
   };
 })();
 
-// 明細表(縦): build_portrait_template.py の TABLE と対応(px@200 × 0.75)
+// 明細表(縦): build_portrait_template.py の TABLE と対応(px@200 × 0.75)。
+// 単価・金額は桁の縦線・銭の欄が無いので、カンマ付きで右寄せ(字間なし)に印字する。
 const PORTRAIT_ITEMS_LAYOUT = (() => {
-  const PITCH = 35.227;
-  const priceSenLeft = 686 + PITCH * 7;          // 銭の境
-  const amountRight = 686 + PITCH * 9 + PITCH * 10;
   const rowH = 49.5;
+  const pad = 14; // 罫線から数字までの余白(px@200)
   return {
     rowTop: (1000 + 55) * 0.75,
     rowHeight: rowH * 0.75,
     textOffset: (rowH * 0.75 - 4.11 / PX2MM) / 2 + 0.5,
+    plainNumbers: true,
     cols: {
       name: (94 + 28) * 0.75,
-      nameWidth: (494 - 8 - 122) * 0.75,         // 品名の印字幅。超える場合は横方向に縮小
-      qtyRight: (606 - 19.3) * 0.75,
-      qtyWidth: 80,
-      unitCenter: (606 + 686) / 2 * 0.75,
+      nameWidth: (796 - 12 - 122) * 0.75,        // 品名の印字幅。超える場合は横方向に縮小
+      qtyRight: (898 - pad) * 0.75,
+      qtyWidth: 70,
+      unitCenter: (898 + 977) / 2 * 0.75,
       unitWidth: 55,
-      priceRight: (priceSenLeft + 9.2) * 0.75,
-      priceWidth: 220,
-      senRight: (priceSenLeft + PITCH * 2 + 9.2) * 0.75, // 銭(2桁)は網掛けの2マスに入れる
-      amountRight: (amountRight + 8.5) * 0.75,
-      amountWidth: 300,
-      remarks: (amountRight + 14) * 0.75,
-      remarksWidth: (1559 - 8 - amountRight - 14) * 0.75 // 備考の印字幅。超える場合は横方向に縮小
+      priceRight: (1166 - pad) * 0.75,
+      priceWidth: (1166 - 977 - pad * 2) * 0.75, // 〜9,999,999。超える場合は横方向に縮小
+      amountRight: (1386 - pad) * 0.75,
+      amountWidth: (1386 - 1166 - pad * 2) * 0.75,
+      remarks: (1386 + 14) * 0.75,
+      remarksWidth: (1559 - 8 - 1386 - 14) * 0.75 // 備考の印字幅。超える場合は横方向に縮小
     }
   };
 })();
@@ -217,6 +216,16 @@ function emptyItem() {
   return { name: "", qty: "", unit: "", price: "", remarks: "" };
 }
 
+// 単価: 縦の帳票は銭の欄が無いので円単位(四捨五入)で扱う。金額・合計もこの単価で計算し、印字と一致させる
+function unitPrice(item) {
+  const price = Number(item.price) || 0;
+  return layout().items.plainNumbers ? Math.round(price) : price;
+}
+
+function itemAmount(item) {
+  return (Number(item.qty) || 0) * unitPrice(item);
+}
+
 function isEmptyItem(item) {
   return !item.name && !item.qty && !item.unit && !item.price && !item.remarks;
 }
@@ -251,12 +260,12 @@ function renderItemsInput() {
   body.innerHTML = "";
   items.forEach((item, idx) => {
     const tr = document.createElement("tr");
-    const amount = (item.qty || 0) * (item.price || 0);
+    const amount = itemAmount(item);
     tr.innerHTML = `
       <td class="col-name"><input type="text" value="${escapeAttr(item.name)}" data-idx="${idx}" data-field="name"></td>
       <td class="col-qty"><input type="number" step="any" value="${item.qty}" data-idx="${idx}" data-field="qty"></td>
       <td class="col-unit"><input type="text" value="${escapeAttr(item.unit)}" data-idx="${idx}" data-field="unit"></td>
-      <td class="col-price"><input type="number" step="0.01" max="999999999" value="${item.price}" data-idx="${idx}" data-field="price"></td>
+      <td class="col-price"><input type="number" step="${layout().items.plainNumbers ? 1 : 0.01}" max="999999999" value="${item.price}" data-idx="${idx}" data-field="price"></td>
       <td class="col-amount"><span class="item-amount" data-idx="${idx}">${amount ? amount.toLocaleString("ja-JP") : ""}</span></td>
       <td class="col-remarks"><input type="text" value="${escapeAttr(item.remarks)}" data-idx="${idx}" data-field="remarks"></td>
     `;
@@ -283,7 +292,7 @@ function renderItemsInput() {
 function updateAmounts() {
   let total = 0;
   items.forEach((item, idx) => {
-    const amount = (item.qty || 0) * (item.price || 0);
+    const amount = itemAmount(item);
     total += amount;
     const span = document.querySelector(`.item-amount[data-idx="${idx}"]`);
     if (span) span.textContent = amount ? amount.toLocaleString("ja-JP") : "";
@@ -417,6 +426,23 @@ function addOverlayFitLeft(layer, xPx, widthPx, yPx, text, extraClass) {
   layer.appendChild(span);
 }
 
+// 右端(rightXPx)に合わせて右寄せで配置し、widthPxを超える場合は横方向に縮小して収める(縦の帳票の単価・金額用)
+function addOverlayFitRight(layer, rightXPx, widthPx, yPx, text, extraClass) {
+  if (text === "" || text === undefined || text === null) return;
+  const span = document.createElement("span");
+  span.className = "ov" + (extraClass ? " " + extraClass : "");
+  const textW = measureOverlayTextPx(String(text));
+  const scale = textW > widthPx ? widthPx / textW : 1;
+  span.style.left = mm(rightXPx - textW * scale) + "mm";
+  span.style.top = mm(yPx) + "mm";
+  if (scale < 1) {
+    span.style.transform = `scaleX(${scale})`;
+    span.style.transformOrigin = "left top";
+  }
+  span.textContent = text;
+  layer.appendChild(span);
+}
+
 // widthPx が指定されていれば縮小して収め、無ければ従来どおり置くだけ(横の帳票は従来の見た目を維持)
 function addOverlayMaybeFit(layer, xPx, widthPx, yPx, text, extraClass) {
   if (widthPx) addOverlayFitLeft(layer, xPx, widthPx, yPx, text, extraClass);
@@ -517,34 +543,39 @@ function buildOverlay(layer, data, enableStampDrag) {
   const rowCount = Math.max(items.length, L.rows);
   for (let i = 0; i < rowCount; i++) {
     const item = items[i] || emptyItem();
-    const amount = (item.qty || 0) * (item.price || 0);
+    const amount = itemAmount(item);
     subtotal += amount;
     if (i >= L.rows && orientation === "portrait") continue; // 縦の帳票は枠外に印字しない(合計には含める)
     const rowY = IL.rowTop + i * IL.rowHeight + IL.textOffset;
     addOverlayMaybeFit(layer, IL.cols.name, IL.cols.nameWidth, rowY, item.name);
     addOverlayRight(layer, IL.cols.qtyRight, IL.cols.qtyWidth, rowY, item.qty);
     addOverlayCenter(layer, IL.cols.unitCenter, IL.cols.unitWidth, rowY, item.unit);
-    if (Number(item.qty) !== 1) {
-      if (IL.cols.senRight && item.price) {
-        // 縦の帳票: 整数部を銭の境に右寄せし、銭は小数点を付けずに網掛けの2マスへ
-        const [intPart, senPart] = Number(item.price).toFixed(2).split(".");
-        addOverlayRight(layer, IL.cols.priceRight, IL.cols.priceWidth, rowY, intPart, "ov-price");
-        if (senPart !== "00") addOverlayRight(layer, IL.cols.senRight, 60, rowY, senPart, "ov-price");
-      } else {
+    if (IL.plainNumbers) {
+      // 縦の帳票: 単価は円単位(銭は四捨五入)、単価・金額ともカンマ付きで右寄せ
+      if (Number(item.qty) !== 1 && item.price) {
+        addOverlayFitRight(layer, IL.cols.priceRight, IL.cols.priceWidth, rowY, yen(unitPrice(item)));
+      }
+      if (amount) addOverlayFitRight(layer, IL.cols.amountRight, IL.cols.amountWidth, rowY, yen(amount));
+    } else {
+      if (Number(item.qty) !== 1) {
         addOverlayRight(layer, IL.cols.priceRight, IL.cols.priceWidth, rowY, priceFmt(item.price), "ov-price");
       }
+      addOverlayRight(layer, IL.cols.amountRight, IL.cols.amountWidth, rowY, amount ? amountFmt(amount) : "", "ov-amount");
     }
-    addOverlayRight(layer, IL.cols.amountRight, IL.cols.amountWidth, rowY, amount ? amountFmt(amount) : "", "ov-amount");
     addOverlayMaybeFit(layer, IL.cols.remarks, IL.cols.remarksWidth, rowY, item.remarks);
   }
 
   const totalRowY = IL.totalRowY !== undefined ? IL.totalRowY : IL.rowTop + L.rows * IL.rowHeight + IL.textOffset;
   addOverlay(layer, IL.cols.name, totalRowY, "合計");
-  const totalStr = amountFmt(subtotal);
-  const totalCharWidth = 26.5; // 概算: グリフ幅+letter-spacing(6.5pt)分
-  const totalYenRightX = IL.cols.amountRight - (totalStr.length * totalCharWidth) - 2;
-  addOverlayRight(layer, IL.cols.amountRight, IL.cols.amountWidth, totalRowY, totalStr, "ov-amount");
-  addOverlayRight(layer, totalYenRightX, 30, totalRowY, "¥", "ov-amount");
+  if (IL.plainNumbers) {
+    addOverlayFitRight(layer, IL.cols.amountRight, IL.cols.amountWidth, totalRowY, "¥" + yen(subtotal));
+  } else {
+    const totalStr = amountFmt(subtotal);
+    const totalCharWidth = 26.5; // 概算: グリフ幅+letter-spacing(6.5pt)分
+    const totalYenRightX = IL.cols.amountRight - (totalStr.length * totalCharWidth) - 2;
+    addOverlayRight(layer, IL.cols.amountRight, IL.cols.amountWidth, totalRowY, totalStr, "ov-amount");
+    addOverlayRight(layer, totalYenRightX, 30, totalRowY, "¥", "ov-amount");
+  }
 
   const digits = digitGridDigits(subtotal);
   const firstDigitIndex = digits.findIndex(ch => ch.trim() !== "");

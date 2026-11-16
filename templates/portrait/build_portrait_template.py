@@ -1,4 +1,4 @@
-﻿"""A4縦の見積書帳票(背景画像)を、A4横の帳票画像から部品を切り出して組み立てる。
+"""A4縦の見積書帳票(背景画像)を、A4横の帳票画像から部品を切り出して組み立てる。
 
 使い方:  python templates/portrait/build_portrait_template.py
 出力:    assets/blue_bg_portrait.png, assets/red_bg_portrait.png (200dpi, 1654x2339px)
@@ -6,6 +6,7 @@
 - 文字・枠などの部品は横の帳票(assets/{blue,red}_bg.png, 200dpi)からそのまま切り出して配置する
   (書体・色・線の太さを原本と完全に一致させるため)。
 - 明細表だけは縦の幅に合わせて列を組み直して描画する(見出し文字は原本から1文字ずつ切り出して再配置)。
+  単価・金額は桁の縦線・銭の欄を設けない(アプリ側でカンマ付き右寄せで印字)。
 - 部品を動かしたら script.js / script-employee.js の LAYOUTS.portrait の座標も同じだけずらすこと。
   座標の対応はこのファイルの PLACE / TABLE の値から計算している(px@200dpi × 0.75 = px@150dpi)。
 """
@@ -35,37 +36,35 @@ PLACE = {
 }
 
 # 明細表 (縦帳票 px@200dpi)
-PITCH = 35.227  # 単価・金額の1桁の幅(横帳票と同じ)
+# 単価・金額は桁の縦線・銭の欄を設けず(カンマ付き右寄せで印字)、その分「品名および仕様」を広く取る
 TABLE = {
     "left": 94, "right": 1559,
     "top": 1000, "header_h": 55, "row_h": 49.5, "rows": 21,  # 入力20行 + 合計1行
-    "name": (94, 494), "qty": (494, 606), "unit": (606, 686),
-    "price_left": 686, "price_int": 7, "price_sen": 2,
-    "amount_digits": 10,
+    "name": (94, 796),       # 89mm
+    "qty": (796, 898),       # 13mm
+    "unit": (898, 977),      # 10mm
+    "price": (977, 1166),    # 24mm (〜9,999,999)
+    "amount": (1166, 1386),  # 28mm (〜999,999,999)
+    "remarks": (1386, 1559), # 22mm
 }
-TABLE["price_right"] = TABLE["price_left"] + PITCH * (TABLE["price_int"] + TABLE["price_sen"])
-TABLE["amount_left"] = TABLE["price_right"]
-TABLE["amount_right"] = TABLE["amount_left"] + PITCH * TABLE["amount_digits"]
 TABLE["bottom"] = TABLE["top"] + TABLE["header_h"] + TABLE["row_h"] * TABLE["rows"]
 
-# 見出し文字: 横帳票の切り出し範囲(1文字ずつ) と 縦帳票の列
+# 見出し文字: 横帳票の見出し行(y 836〜869)から1文字(語)ずつ切り出して、各列の中央に指定の間隔で並べる
 HEADERS = [
-    # (列 x0, x1, [(切り出し x0, x1), ...]) 見出し行 y 838〜868 を切り出す
-    ((94, 494), [(260, 285), (348, 373), (440, 528), (589, 618), (679, 708)]),   # 品 名 および 仕 様
-    ((494, 606), [(875, 904), (967, 995)]),                                       # 数 量
-    ((606, 686), [(1070, 1128)]),                                                  # 単位
-    (None, [(1253, 1281), (1402, 1431)]),                                          # 単 価 (位置は下で指定)
-    (None, [(1655, 1684), (1776, 1805)]),                                          # 金 額
-    (None, [(1990, 2019), (2112, 2140)]),                                          # 備 考
+    # (列, [(切り出し x0, x1), ...], 文字の間隔px)
+    ("name",    [(260, 285), (348, 373), (440, 528), (589, 618), (679, 708)], 55),  # 品 名 および 仕 様
+    ("qty",     [(875, 904), (967, 995)], 18),                                      # 数 量
+    ("unit",    [(1070, 1128)], 0),                                                 # 単位
+    ("price",   [(1253, 1281), (1402, 1431)], 50),                                  # 単 価
+    ("amount",  [(1655, 1684), (1776, 1805)], 60),                                  # 金 額
+    ("remarks", [(1990, 2019), (2112, 2140)], 40),                                  # 備 考
 ]
 HEADER_SRC_Y = (836, 869)
-SEN_SRC = (1491, 848, 1529, 879)  # (銭)
 
 
 def build(color_name):
     src = Image.open(ASSETS / f"{color_name}_bg.png").convert("RGB")
     ink = (17, 97, 122) if color_name == "blue" else (255, 65, 65)
-    shade = (192, 213, 220) if color_name == "blue" else (255, 229, 229)
 
     page = Image.new("RGB", (W, H), "white")
     for name, (box, (x, y), scale) in PLACE.items():
@@ -80,69 +79,29 @@ def build(color_name):
     body_top = top + hh
     bottom = round(t["bottom"])
 
-    # 銭の網掛け(明細行のみ)
-    sen_left = t["price_left"] + PITCH * t["price_int"]
-    d.rectangle([round(sen_left) + 1, body_top + 1, round(t["price_right"]) - 1, bottom - 1], fill=shade)
-
-    def vline(x, y0, y1, dotted=False):
-        x = round(x)
-        if not dotted:
-            d.line([(x, y0), (x, y1)], fill=ink, width=1)
-            return
-        y = y0
-        while y < y1:
-            d.line([(x, y), (x, min(y + 3, y1))], fill=ink, width=1)
-            y += 6
-
     # 横罫(見出し下・各行)
     for i in range(rows):
         y = round(body_top + rh * i)
         d.line([(t["left"], y), (t["right"], y)], fill=ink, width=1)
 
-    # 縦罫
-    for x in (t["qty"][0], t["unit"][0], t["price_left"], t["amount_left"], t["amount_right"]):
-        vline(x, top, bottom)
-    # 単価: 整数部は右(銭の手前)から3桁ごとに実線、銭の境も実線、それ以外は点線(見出し行には引かない)
-    for i in range(1, t["price_int"] + t["price_sen"]):
-        x = t["price_left"] + PITCH * i
-        from_right_int = t["price_int"] - i  # 銭の境から左へ何桁目か
-        solid = i == t["price_int"] or (0 < from_right_int and from_right_int % 3 == 0)
-        vline(x, body_top, bottom, dotted=not solid)
-    for i in range(1, t["amount_digits"]):
-        x = t["amount_left"] + PITCH * i
-        from_right = t["amount_digits"] - i
-        vline(x, body_top, bottom, dotted=from_right % 3 != 0)
+    # 縦罫(列の境のみ)
+    for key in ("qty", "unit", "price", "amount", "remarks"):
+        x = t[key][0]
+        d.line([(x, top), (x, bottom)], fill=ink, width=1)
 
     # 外枠(太線4px)
     d.rectangle([t["left"] - 2, top - 2, t["right"] + 1, bottom + 1], outline=ink, width=4)
 
-    # 見出し文字
-    def paste_glyphs(col, glyph_boxes, center=None, gap=None):
+    # 見出し文字(列の中央に指定の間隔で並べる)
+    y = top + (hh - (HEADER_SRC_Y[1] - HEADER_SRC_Y[0])) // 2 + 1
+    for key, glyph_boxes, gap in HEADERS:
         parts = [src.crop((gx0, HEADER_SRC_Y[0], gx1, HEADER_SRC_Y[1])) for gx0, gx1 in glyph_boxes]
-        total = sum(p.width for p in parts)
-        x0, x1 = col
-        if gap is None:
-            # 列幅の両端に余白を残して均等割り
-            margin = (x1 - x0) * 0.12 if len(parts) > 1 else 0
-            gap = (x1 - x0 - 2 * margin - total) / (len(parts) - 1) if len(parts) > 1 else 0
-            start = x0 + margin if len(parts) > 1 else (x0 + x1 - total) / 2
-        else:
-            width = total + gap * (len(parts) - 1)
-            start = (center if center is not None else (x0 + x1) / 2) - width / 2
-        y = top + (hh - (HEADER_SRC_Y[1] - HEADER_SRC_Y[0])) // 2 + 1
-        x = start
+        x0, x1 = t[key]
+        width = sum(p.width for p in parts) + gap * (len(parts) - 1)
+        x = (x0 + x1) / 2 - width / 2
         for p in parts:
             page.paste(p, (round(x), y))
             x += p.width + gap
-
-    paste_glyphs(HEADERS[0][0], HEADERS[0][1])
-    paste_glyphs(HEADERS[1][0], HEADERS[1][1], gap=30)
-    paste_glyphs(HEADERS[2][0], HEADERS[2][1])
-    paste_glyphs((t["price_left"], sen_left), HEADERS[3][1], gap=70)
-    paste_glyphs((t["amount_left"], t["amount_right"]), HEADERS[4][1], gap=90)
-    paste_glyphs((t["amount_right"], t["right"]), HEADERS[5][1], gap=40)
-    sen = src.crop(SEN_SRC)
-    page.paste(sen, (round(t["price_right"]) - sen.width - 1, top + hh - sen.height - 1))
 
     out = ASSETS / f"{color_name}_bg_portrait.png"
     page.save(out, dpi=(200, 200), optimize=True)
