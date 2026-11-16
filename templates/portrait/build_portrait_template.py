@@ -21,6 +21,10 @@ FONT = r"C:\Windows\Fonts\YuGothM.ttc"
 DPI = 200
 W, H = 1654, 2339  # A4縦 200dpi
 
+# 綴じ代: 帳票全体を右へずらす量(mm)。左余白 12+6=18mm、右余白 12-6=6mm になる。
+# 下の座標はずらす前(左右余白12mm)の値。アプリ側は style.css の .orient-portrait .overlay-layer の left で同じだけずらす
+BINDING_MM = 6
+
 
 def px(mm):
     return round(mm * DPI / 25.4)
@@ -188,7 +192,9 @@ def build(color_name):
         rect(bx, c["top"], bx + c["w"], c["top"] + c["h"])
 
     out = ASSETS / f"{color_name}_bg_portrait.png"
-    page.save(out, dpi=(DPI, DPI), optimize=True)
+    shifted = Image.new("RGB", (W, H), "white")
+    shifted.paste(page.crop((0, 0, W - px(BINDING_MM), H)), (px(BINDING_MM), 0))
+    shifted.save(out, dpi=(DPI, DPI), optimize=True)
     print("saved", out)
 
 

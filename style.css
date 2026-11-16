@@ -723,6 +723,12 @@ legend {
   height: 297mm;
 }
 
+/* 縦の帳票は左に綴じ代を取るため、帳票画像と同じだけ印字(押印含む)を右へずらす
+   (templates/portrait/build_portrait_template.py の BINDING_MM と同じ値にすること) */
+.orient-portrait .overlay-layer {
+  left: 6mm;
+}
+
 /* 縦の帳票の見積総額(下線の上に大きく印字) */
 .ov.ov-total {
   font-size: 7mm;
