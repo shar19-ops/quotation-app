@@ -28,7 +28,7 @@
     <option value="blue" selected>青</option>
     <option value="red">赤</option>
   </select>
-  <p class="hint">「ファイルを開く」で業者から受け取った見積書JSONファイルを読み込みます。「工事情報」と「業者見積日」は修正できます。それ以外の「業者(自社)情報」と「明細内容」は閲覧のみで編集はできません(印刷・出力は可能です)。「プレビュー」を押すと印刷プレビューが開きます。</p>
+  <p class="hint">「ファイルを開く」で業者から受け取った見積書JSONファイルを読み込みます。「工事情報」と「業者見積日」は修正できます。それ以外の「業者(自社)情報」と「明細内容」は閲覧のみで編集はできません(印刷・出力は可能です)。「プレビュー」を押すと印刷プレビューが開きます。業者が見積依頼書(本-購買-A0004)を取り込んでいる場合は、「見積依頼書を表示・印刷」で確認・印刷できます。</p>
   <p class="hint hint-notice">添付ファイルは閲覧のみで、削除はできません。</p>
   <p class="hint">「📧 メール送信」: 印刷プレビューが開き、「印刷実行」でPDFとして保存すると、続けてOutlook(既定のメールソフト)の新規メール画面が開きます。保存したPDFファイルはメールへ手動で添付してください(ブラウザの仕様上、自動添付はできません)。</p>
 </div>
@@ -39,6 +39,10 @@
     <div class="info-columns">
       <fieldset>
         <legend>工事情報</legend>
+        <div class="a0004-row">
+          <button type="button" id="btnViewA0004" class="btn-secondary">見積依頼書を表示・印刷</button>
+          <span class="a0004-status" id="a0004Status"></span>
+        </div>
         <label>事業所(本支店区分)
           <select id="branchType">
             <option value="">選択してください</option>
@@ -191,6 +195,24 @@
   </div>
 </div>
 
+<!-- 見積依頼書(A0004)の表示モーダル(業者が見積書に取り込んだもの) -->
+<div id="a0004Modal" class="preview-modal no-print" style="display:none;">
+  <div class="preview-modal-inner a0004-modal-inner">
+    <div class="preview-modal-header">
+      <span class="preview-modal-title">見積依頼書／注文書付属書</span>
+      <button class="btn-modal-close" id="btnCloseA0004">✕ 閉じる</button>
+    </div>
+    <div class="preview-modal-body"><div id="a0004View" class="a0004-view"></div></div>
+    <div class="preview-modal-footer">
+      <button id="btnPrintA0004">印刷(表面・裏面)</button>
+      <button class="btn-modal-close" id="btnCloseA0004b">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 見積依頼書(A0004)の印刷用(印刷するときだけ中身を作る) -->
+<div id="a0004Print"></div>
+
 <!-- 背景画像参照用: JSがsrcを読む -->
 <img id="bgBlueSrc" src="assets/blue_bg.png" style="display:none" alt="">
 <img id="bgRedSrc"  src="assets/red_bg.png"  style="display:none" alt="">
@@ -198,8 +220,11 @@
 <img id="bgRedPortraitSrc"  src="assets/red_bg_portrait.png"  style="display:none" alt="">
 <img id="bgBluePortraitContSrc" src="assets/blue_bg_portrait_cont.png" style="display:none" alt="">
 <img id="bgRedPortraitContSrc"  src="assets/red_bg_portrait_cont.png"  style="display:none" alt="">
+<img id="a0004MarkSrc" src="assets/yes_mark.jpg" style="display:none" alt="">
+<img id="a0004WordSrc" src="assets/yudensha_word.png" style="display:none" alt="">
 
 <script src="date-stamp.js"></script>
+<script src="a0004.js"></script>
 <script src="script-employee.js"></script>
 </body>
 </html>

@@ -40,6 +40,7 @@ let stampDataUrl3 = null;
 let stampDataUrl4 = null; // 社判
 
 let attachments = []; // [{name, type, dataUrl}]
+let a0004 = null; // 業者が取り込んだ見積依頼書(本-購買-A0004)。閲覧・印刷のみ
 
 // 元PDF(150dpiレンダリング基準, px)→mm変換。原寸ページは 1754x1240px = 297x210mm
 const PX2MM = 25.4 / 150;
@@ -1016,13 +1017,37 @@ function applyLoadedData(data) {
   stampDataUrl3 = data.stampDataUrl3 || null;
   stampDataUrl4 = data.stampDataUrl4 || null;
   attachments = Array.isArray(data.attachments) ? data.attachments : [];
+  a0004 = data.a0004 && data.a0004.values ? data.a0004 : null;
   extraPages = Number(data.extraPages) || 0;
   items = Array.isArray(data.items) && data.items.length ? trimTrailingEmptyRows(data.items) : [];
   restoreOrientation(data);
   setField("staffStampDate", todayIso()); // 新しいファイルを開いたら確認日は当日にリセット(担当者名は維持)
   renderItemsInput();
   renderAttachmentList();
+  renderA0004Status();
   renderPreview();
+}
+
+// ===== 見積依頼書(本-購買-A0004): 業者が見積書に取り込んだものを閲覧・印刷する =====
+function renderA0004Status() {
+  const status = document.getElementById("a0004Status");
+  const has = !!(a0004 && a0004.values);
+  status.className = "a0004-status" + (has ? "" : " empty");
+  status.textContent = has
+    ? `見積依頼書あり: ${a0004.code} ${a0004.values.koban || ""} ${a0004.values.gyosha ? "(" + a0004.values.gyosha + " 殿)" : ""}`
+    : "見積依頼書は添付されていません";
+  document.getElementById("btnViewA0004").disabled = !has;
+}
+
+function closeA0004Modal() {
+  document.getElementById("a0004Modal").style.display = "none";
+  document.getElementById("a0004View").innerHTML = "";
+}
+
+function openA0004View() {
+  if (!a0004) return;
+  A0004.render(document.getElementById("a0004View"), a0004);
+  document.getElementById("a0004Modal").style.display = "flex";
 }
 
 function todayIso() {
@@ -1055,8 +1080,17 @@ document.addEventListener("DOMContentLoaded", () => {
   loadStaffStampPref();
   renderItemsInput();
   renderAttachmentList();
+  renderA0004Status();
   renderPreview();
 
+  document.getElementById("btnViewA0004").addEventListener("click", openA0004View);
+  document.getElementById("btnPrintA0004").addEventListener("click", () => {
+    closeA0004Modal();
+    A0004.print(a0004);
+  });
+  ["btnCloseA0004", "btnCloseA0004b"].forEach(id => {
+    document.getElementById(id).addEventListener("click", closeA0004Modal);
+  });
   document.getElementById("orientation").addEventListener("change", onOrientationChange);
   document.getElementById("btnOpenFile").addEventListener("click", openFromFile);
   document.getElementById("fileInput").addEventListener("change", async (e) => {

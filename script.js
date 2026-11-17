@@ -21,6 +21,7 @@ let stampDataUrl3 = null;
 let stampDataUrl4 = null; // 社判
 
 let attachments = []; // [{name, type, dataUrl}]
+let a0004 = null; // 取り込んだ見積依頼書(本-購買-A0004)。自社1社分だけ(a0004.js の extract)
 
 // 元PDF(150dpiレンダリング基準, px)→mm変換。原寸ページは 1754x1240px = 297x210mm
 const PX2MM = 25.4 / 150;
@@ -818,6 +819,7 @@ function collectFormData() {
   data.stampDataUrl3 = stampDataUrl3;
   data.stampDataUrl4 = stampDataUrl4;
   data.attachments   = attachments;
+  data.a0004         = a0004;
   return data;
 }
 
@@ -1095,13 +1097,14 @@ function escapeScriptCloseText(text) {
 function buildInternalForwardHtml() {
   closePrintPreview();
   closeCsvImportModal();
+  closeA0004Modals();
   const data = collectFormData();
   data.items = items;
   const json = escapeScriptCloseText(JSON.stringify(data));
 
   const clone = document.documentElement.cloneNode(true);
   // 動的に書き換わる要素は空にしておく(bootstrapのapplyLoadedData()実行時に再構築される)
-  clone.querySelectorAll("#overlayLayer, #overlayLayerAlt, #previewLayerA, #previewLayerB, #itemsInputBody, #attachmentList, #csvImportBody")
+  clone.querySelectorAll("#overlayLayer, #overlayLayerAlt, #previewLayerA, #previewLayerB, #itemsInputBody, #attachmentList, #csvImportBody, #a0004View, #a0004VendorList, #a0004Print")
     .forEach(el => { el.innerHTML = ""; });
   const previewModalEl = clone.querySelector("#previewModal");
   if (previewModalEl) previewModalEl.style.display = "none";
@@ -1165,11 +1168,13 @@ function applyLoadedData(data) {
   stampDataUrl3 = data.stampDataUrl3 || null;
   stampDataUrl4 = data.stampDataUrl4 || null;
   attachments = Array.isArray(data.attachments) ? data.attachments : [];
+  a0004 = data.a0004 && data.a0004.values ? data.a0004 : null;
   extraPages = Number(data.extraPages) || 0;
   items = Array.isArray(data.items) && data.items.length ? trimTrailingEmptyRows(data.items) : [];
   restoreOrientation(data);
   renderItemsInput();
   renderAttachmentList();
+  renderA0004Status();
   renderPreview();
   saveDraft();
   backfillPdfPages(); // 古い保存データにpdf.jsページ変換結果が無ければ補完する
@@ -1202,6 +1207,7 @@ function loadDraft() {
     setField("vendorQuoteDate", todayIso());
     setField("themeColor", "blue");
     renderItemsInput();
+    renderA0004Status();
     renderPreview();
     return;
   }
@@ -1214,11 +1220,13 @@ function loadDraft() {
   stampDataUrl3 = data.stampDataUrl3 || null;
   stampDataUrl4 = data.stampDataUrl4 || null;
   attachments = Array.isArray(data.attachments) ? data.attachments : [];
+  a0004 = data.a0004 && data.a0004.values ? data.a0004 : null;
   extraPages = Number(data.extraPages) || 0;
   items = Array.isArray(data.items) && data.items.length ? trimTrailingEmptyRows(data.items) : [];
   restoreOrientation(data);
   renderItemsInput();
   renderAttachmentList();
+  renderA0004Status();
   renderPreview();
   backfillPdfPages(); // 古い保存データにpdf.jsページ変換結果が無ければ補完する
 }
@@ -1315,10 +1323,12 @@ function newQuotation() {
   stampDataUrl4 = keptStampDataUrl4;
 
   attachments = [];
+  a0004 = null;
   extraPages = 0;
   items = Array.from({ length: layout().rows }, emptyItem);
   renderItemsInput();
   renderAttachmentList();
+  renderA0004Status();
   renderPreview();
   saveDraft();
 }
@@ -1493,6 +1503,111 @@ function downloadCsvTemplate() {
   URL.revokeObjectURL(url);
 }
 
+// ===== 見積依頼書(本-購買-A0004)の取込・表示・印刷 =====
+// Y-Format で保存したJSONから工番・工事名(工事名称)・施工場所を取り込み、見積依頼書は見積書データに一緒に保存する。
+// 事業所は見積依頼書に無いので取り込まない(業者が選ぶ)。
+
+function renderA0004Status() {
+  const status = document.getElementById("a0004Status");
+  if (!status) return;
+  const has = !!(a0004 && a0004.values);
+  status.className = "a0004-status" + (has ? "" : " empty");
+  status.textContent = has
+    ? `取込済み: ${a0004.code} ${a0004.values.koban || ""} ${a0004.values.gyosha ? "(" + a0004.values.gyosha + " 殿)" : ""}`
+    : "見積依頼書は取り込まれていません";
+  document.getElementById("btnViewA0004").disabled = !has;
+  const removeBtn = document.getElementById("btnRemoveA0004");
+  if (removeBtn) removeBtn.disabled = !has;
+}
+
+function closeA0004Modals() {
+  ["a0004Modal", "a0004VendorModal"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
+  });
+  const view = document.getElementById("a0004View");
+  if (view) view.innerHTML = "";
+}
+
+// 業者名の空白・法人格の違いを無視して自社の分を探す(業者選択の目印にするだけ)
+function normalizeCompanyName(s) {
+  return String(s || "").replace(/[\s　]/g, "").replace(/株式会社|有限会社|合同会社|\(株\)|（株）|\(有\)|（有）|㈱|㈲|殿|御中/g, "");
+}
+
+function onA0004FileText(text, fileName) {
+  let parsed;
+  try {
+    parsed = A0004.parse(text);
+  } catch (err) {
+    alert(err.message);
+    return;
+  }
+  if (parsed.vendors.length === 1) {
+    applyA0004(parsed, 1, fileName);
+    return;
+  }
+  const own = normalizeCompanyName(getField("vendorName"));
+  const list = document.getElementById("a0004VendorList");
+  list.innerHTML = "";
+  parsed.vendors.forEach(vd => {
+    const li = document.createElement("li");
+    if (own && normalizeCompanyName(vd.name) === own) li.className = "match";
+    const name = document.createElement("span");
+    name.className = "a0004-vendor-name";
+    name.textContent = `${vd.n}社目: ${vd.name || "(業者名なし)"}` + (li.className ? " ← 自社名と一致" : "");
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = "この業者で取込";
+    btn.addEventListener("click", () => {
+      document.getElementById("a0004VendorModal").style.display = "none";
+      applyA0004(parsed, vd.n, fileName);
+    });
+    li.append(name, btn);
+    list.appendChild(li);
+  });
+  document.getElementById("a0004VendorModal").style.display = "flex";
+}
+
+function applyA0004(parsed, n, fileName) {
+  const next = A0004.extract(parsed, n, fileName);
+  const v = next.values;
+  if (a0004 && !confirm("取り込み済みの見積依頼書を、このファイルの内容に置き換えますか?")) return;
+  // 工事情報: 入力済みで違う値のときは確認してから上書き
+  const map = [["projectNo", "工番", v.koban], ["projectName", "工事名", v.kojiName], ["siteLocation", "施工場所", v.basho]];
+  const diffs = map.filter(([id, , val]) => val && getField(id) && getField(id) !== String(val));
+  let overwrite = true;
+  if (diffs.length) {
+    overwrite = confirm("工事情報を見積依頼書の内容で上書きしますか?\n\n" +
+      diffs.map(([id, label, val]) => `${label}: ${getField(id)} → ${val}`).join("\n") +
+      "\n\n(「キャンセル」なら入力済みの値はそのままにして、見積依頼書だけ取り込みます)");
+  }
+  map.forEach(([id, , val]) => {
+    if (!val) return;
+    if (!getField(id) || overwrite) setField(id, String(val));
+  });
+  a0004 = next;
+  renderA0004Status();
+  renderPreview();
+  saveDraft();
+  const notes = [];
+  if (!getField("branchType")) notes.push("事業所は見積依頼書に無いため、選択してください。");
+  alert("見積依頼書を取り込みました。" + (notes.length ? "\n" + notes.join("\n") : ""));
+}
+
+function openA0004View() {
+  if (!a0004) return;
+  A0004.render(document.getElementById("a0004View"), a0004);
+  document.getElementById("a0004Modal").style.display = "flex";
+}
+
+function removeA0004() {
+  if (!a0004) return;
+  if (!confirm("取り込んだ見積依頼書を外しますか?(工番・工事名・施工場所の入力はそのまま残ります)")) return;
+  a0004 = null;
+  renderA0004Status();
+  saveDraft();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   setupPdfWorker();
   loadDraft();
@@ -1561,6 +1676,24 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       alert("CSVの読込に失敗しました: " + err.message);
     }
+  });
+  document.getElementById("btnImportA0004").addEventListener("click", () => {
+    document.getElementById("a0004Input").click();
+  });
+  document.getElementById("a0004Input").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    onA0004FileText(await file.text(), file.name);
+  });
+  document.getElementById("btnViewA0004").addEventListener("click", openA0004View);
+  document.getElementById("btnRemoveA0004").addEventListener("click", removeA0004);
+  document.getElementById("btnPrintA0004").addEventListener("click", () => {
+    closeA0004Modals();
+    A0004.print(a0004);
+  });
+  ["btnCloseA0004", "btnCloseA0004b", "btnCloseA0004Vendor"].forEach(id => {
+    document.getElementById(id).addEventListener("click", closeA0004Modals);
   });
   document.getElementById("btnDownloadCsvTemplate").addEventListener("click", downloadCsvTemplate);
   document.getElementById("btnCloseCsvImport").addEventListener("click", closeCsvImportModal);

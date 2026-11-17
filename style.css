@@ -798,3 +798,134 @@ legend {
   .print-only { display: block; }
   #printAreaAlt { page-break-before: always; }
 }
+
+/* ===== 本-購買-A0004 見積依頼書／注文書付属書(取込・閲覧・印刷) ===== */
+.a0004-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin-bottom: 8px;
+}
+.a0004-status {
+  font-size: 12px;
+  color: #374151;
+}
+.a0004-status.empty { color: #9ca3af; }
+.a0004-modal-inner { width: fit-content; }
+.a0004-view {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  zoom: 0.8; /* 画面表示のみ縮小 */
+}
+.a0004-view .a4f-sheet { box-shadow: 0 1px 6px rgba(0,0,0,0.15); }
+.a0004-vendor-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.a0004-vendor-list li { display: flex; align-items: center; gap: 10px; font-size: 14px; }
+.a0004-vendor-list li.match { font-weight: bold; }
+.a0004-vendor-list .a0004-vendor-name { min-width: 240px; }
+#a0004Print { display: none; }
+
+/* 帳票本体(Y-Format の A0004 縦と同じ寸法) */
+.a4f-sheet {
+  --a4f-line: #333;
+  --a4f-label: #eef0f3;
+  width: 210mm;
+  height: 297mm;
+  padding: 10mm 12mm 8mm;
+  box-sizing: border-box;
+  background: #fff;
+  color: #1a1a1a;
+  font-family: "BIZ UDPGothic", "BIZ UDPゴシック", "Yu Gothic UI", "Meiryo", sans-serif;
+  font-size: 10pt;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.a4f-sheet *, .a4f-sheet *::before, .a4f-sheet *::after { box-sizing: border-box; }
+.a4f-header { display: flex; align-items: flex-start; gap: 6mm; margin-bottom: 4mm; }
+.a4f-head-left { flex: 1; min-width: 0; align-self: stretch; display: flex; flex-direction: column; align-items: flex-start; }
+.a4f-head-blocks { margin-top: auto; padding-top: 3mm; align-self: stretch; }
+.a4f-code { font-size: 8pt; color: #555; letter-spacing: .05em; }
+.a4f-iso { margin-left: 5mm; letter-spacing: 0; }
+.a4f-title {
+  font-size: 15.5pt; font-weight: bold; letter-spacing: .04em;
+  margin: 1mm 0 2mm; padding-bottom: 1.5mm;
+  border-bottom: 3px double var(--a4f-line);
+  display: inline-block; white-space: nowrap;
+}
+.a4f-sub { font-size: 9pt; margin-left: .5em; letter-spacing: 0; font-weight: normal; }
+.a4f-stamps { display: flex; flex-shrink: 0; }
+.a4f-stamp-group { display: flex; border: 1.2px solid var(--a4f-line); }
+.a4f-stamp-box { width: 20mm; display: flex; flex-direction: column; }
+.a4f-stamp-box + .a4f-stamp-box { border-left: 1px solid var(--a4f-line); }
+.a4f-sb-label {
+  height: 5mm; line-height: 5mm; text-align: center; font-size: 6.5pt; white-space: nowrap; overflow: hidden;
+  background: var(--a4f-label); border-bottom: 1px solid var(--a4f-line);
+}
+.a4f-sb-date { height: 4.5mm; line-height: 4.5mm; font-size: 8pt; text-align: center; }
+.a4f-sb-area { height: 15.5mm; position: relative; }
+.a4f-sb-roles { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 6.5pt; color: #b3bac6; }
+.a4f-body { flex: 1; display: flex; flex-direction: column; gap: 4mm; min-height: 0; }
+.a4f-row { flex: 1; display: flex; gap: 4mm; align-items: stretch; }
+.a4f-colwrap { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.a4f-col { gap: 1.5mm; }
+table.a4f-grid { width: 100%; border-collapse: collapse; table-layout: fixed; border: 1.2px solid var(--a4f-line); }
+table.a4f-grid td, table.a4f-grid th { border: 1px solid var(--a4f-line); padding: 0; vertical-align: middle; font-weight: normal; }
+table.a4f-grid th { background: var(--a4f-label); text-align: center; letter-spacing: .05em; line-height: 1.25; }
+table.a4f-vendor { width: 91mm; }
+table.a4f-vendor th { width: 23mm; height: 6.5mm; font-size: 9pt; }
+table.a4f-vendor td { height: 6.5mm; font-size: 10pt; padding: 0 1.5mm; }
+table.a4f-vendor td.a4f-vname { border-right: none; }
+table.a4f-vendor td.a4f-dono { width: 8mm; text-align: center; border-left: none; }
+table.a4f-b4 { flex: 1; }
+table.a4f-b4 th { font-size: 8pt; height: 4.8mm; padding: 0 .5mm; line-height: 1.1; }
+table.a4f-b4 th.a4f-mh { font-size: 5.8pt; letter-spacing: -.05em; }
+table.a4f-b4 th.a4f-lbl { font-weight: 400; }
+table.a4f-b4 td { font-size: 8pt; height: 5.3mm; line-height: 1.15; padding: 0 1mm; }
+table.a4f-b4 tr.a4f-grp > td, table.a4f-b4 tr.a4f-grp > th { border-top: 1.2px solid var(--a4f-line); }
+table.a4f-b4 td.a4f-m { padding: 0; text-align: center; font-size: 8pt; }
+table.a4f-b4 td.a4f-txt.red { color: #c0392b; }
+table.a4f-b4 td.a4f-in { padding: 0 1.5mm; }
+table.a4f-b4 td.a4f-date { text-align: right; }
+table.a4f-b4 td.a4f-range { padding: 0 1.5mm; }
+table.a4f-b4 td.a4f-range span { display: inline-block; text-align: right; }
+table.a4f-b4 td.a4f-range span:first-child, table.a4f-b4 td.a4f-range span:last-child { width: calc(50% - 4mm); }
+table.a4f-b4 td.a4f-range span:nth-child(2) { width: 8mm; text-align: center; }
+table.a4f-b4 .a4f-lv { padding-left: 1.5mm; min-height: 4.6mm; line-height: 4.6mm; }
+table.a4f-b4 .a4f-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 0 1mm; }
+table.a4f-b4 .a4f-checks { display: inline-flex; flex-wrap: nowrap; gap: 0 2mm; padding: 1mm 1.5mm; }
+table.a4f-b4 .a4f-chk { display: inline-flex; align-items: center; gap: 1mm; white-space: nowrap; }
+table.a4f-b4 .a4f-box {
+  width: 2.6mm; height: 2.6mm; border: 1px solid var(--a4f-line);
+  display: inline-flex; align-items: center; justify-content: center; font-size: 7pt; line-height: 1;
+}
+table.a4f-b4 .a4f-box.on::after { content: "✓"; font-weight: bold; }
+table.a4f-b4 .a4f-kv { flex: 1; min-width: 0; padding: 0 1mm; }
+table.a4f-b4 .a4f-kensa .a4f-sub { flex: none; width: 24mm; padding-left: 2mm; }
+table.a4f-b4 .a4f-kensa .a4f-inline { flex-wrap: nowrap; }
+table.a4f-b4 .a4f-kensa .a4f-kv { flex: 1; min-height: 4.6mm; line-height: 4.6mm; }
+table.a4f-b4 .a4f-kensa .a4f-kv.a4f-date { text-align: right; }
+.a4f-notes { font-size: 8pt; line-height: 1.38; margin: 0; padding-left: 0; list-style: none; color: #222; }
+.a4f-terms { columns: 2; column-gap: 7mm; font-size: 8.2pt; line-height: 1.43; text-align: justify; }
+.a4f-terms-title { font-weight: 700; font-size: 10pt; margin-bottom: 1mm; }
+.a4f-terms p { margin: 0; break-inside: avoid-column; }
+.a4f-terms p.art { text-indent: -1em; padding-left: 1em; margin-top: .6mm; }
+.a4f-terms p.sub { padding-left: 1em; }
+.a4f-terms .a4f-ijo { text-align: right; margin-top: 1mm; }
+.a4f-footer {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  margin-top: 4mm; padding-top: 2mm; border-top: 1px solid #9a9a9a;
+}
+.a4f-brand { display: flex; align-items: center; gap: 3mm; }
+.a4f-mark { height: 6.5mm; }
+.a4f-word { height: 3.1mm; }
+.a4f-ver { font-size: 7.5pt; color: #666; }
+
+/* A0004 だけを印刷するとき(見積書・添付は印刷しない) */
+@media print {
+  body.print-a0004 .print-source { display: none !important; }
+  body.print-a0004 #a0004Print { display: block; }
+  body.print-a0004 .a4f-sheet { page-break-after: always; break-after: page; }
+  body.print-a0004 .a4f-sheet:last-child { page-break-after: auto; break-after: auto; }
+}
