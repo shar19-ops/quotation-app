@@ -702,7 +702,7 @@ legend {
   color: #2563eb;
 }
 
-/* ===== 帳票の向き: A4縦(β版) ===== */
+/* ===== 帳票の向き: A4縦(標準) / A4横(旧様式) ===== */
 /* 印刷時の用紙の向き(@page size)は script.js の applyOrientationView() が切り替える */
 
 .orientation-select {
@@ -717,18 +717,6 @@ legend {
   padding: 6px 8px;
   border-radius: 4px;
   font-size: 13px;
-}
-
-.beta-badge {
-  display: inline-block;
-  margin-left: 8px;
-  padding: 1px 8px;
-  border-radius: 10px;
-  background: #f59e0b;
-  color: #1f2937;
-  font-size: 12px;
-  font-weight: bold;
-  vertical-align: middle;
 }
 
 .orient-portrait .quote-page,
@@ -822,7 +810,7 @@ legend {
 <body>
 
 <div class="toolbar no-print">
-  <h1>見積書入力アプリ(雄電社様式)<span class="beta-badge">β版 A4縦</span></h1>
+  <h1>見積書入力アプリ(雄電社様式)</h1>
   <div class="toolbar-buttons">
     <button id="btnNew">新規作成</button>
     <button id="btnSave">保存</button>
@@ -833,8 +821,8 @@ legend {
     <button id="btnPrint">プレビュー</button>
     <label class="orientation-select">帳票の向き
       <select id="orientation">
-        <option value="portrait">A4縦(β版)</option>
-        <option value="landscape">A4横(現行)</option>
+        <option value="portrait">A4縦</option>
+        <option value="landscape">A4横(旧様式)</option>
       </select>
     </label>
   </div>
@@ -1164,10 +1152,10 @@ const ITEMS_LAYOUT = {
   }
 };
 
-// ===== 帳票の向き(A4横=現行 / A4縦=β版) =====
+// ===== 帳票の向き(A4縦=標準 / A4横=旧様式) =====
 // A4縦の帳票(assets/*_bg_portrait.png)は templates/portrait/build_portrait_template.py で生成している
 // (配置は「見積書レイアウト参考.pdf」に合わせた)。縦の印字位置は同スクリプトと同じ mm の値で定義する。
-const DEFAULT_ORIENTATION = "portrait"; // β版は縦が既定。承認前の本番(main)は横のまま
+const DEFAULT_ORIENTATION = "portrait"; // 2026-11 承認によりA4縦を標準とする(A4横は旧様式として切替可能)
 
 // mm → 150dpi基準px
 const P = (mmValue) => mmValue / PX2MM;

@@ -112,10 +112,10 @@ const ITEMS_LAYOUT = {
   }
 };
 
-// ===== 帳票の向き(A4横=現行 / A4縦=β版) =====
+// ===== 帳票の向き(A4縦=標準 / A4横=旧様式) =====
 // A4縦の帳票(assets/*_bg_portrait.png)は templates/portrait/build_portrait_template.py で生成している
 // (配置は「見積書レイアウト参考.pdf」に合わせた)。縦の印字位置は同スクリプトと同じ mm の値で定義する。
-const DEFAULT_ORIENTATION = "portrait"; // β版は縦が既定。承認前の本番(main)は横のまま
+const DEFAULT_ORIENTATION = "portrait"; // 2026-11 承認によりA4縦を標準とする(A4横は旧様式として切替可能)
 
 // mm → 150dpi基準px
 const P = (mmValue) => mmValue / PX2MM;
