@@ -619,6 +619,14 @@ legend {
 
 /* ===== 社員用アプリ: 閲覧専用フィールドの表示 ===== */
 
+.employee-app .editable-badge {
+  font-size: 11px;
+  color: #047857;
+  background: #d1fae5;
+  border-radius: 3px;
+  padding: 1px 6px;
+}
+
 .employee-app .readonly-badge {
   font-size: 11px;
   font-weight: normal;
@@ -685,6 +693,99 @@ legend {
 
 .attachment-view-fallback a {
   color: #2563eb;
+}
+
+/* ===== 帳票の向き: A4縦(標準) / A4横(旧様式) ===== */
+/* 印刷時の用紙の向き(@page size)は script.js の applyOrientationView() が切り替える */
+
+.orientation-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 12px;
+  font-size: 13px;
+}
+
+.orientation-select select {
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.orient-portrait .quote-page,
+.orient-portrait .bg-image,
+.orient-portrait .overlay-layer {
+  width: 210mm;
+  height: 297mm;
+}
+
+/* 縦の帳票は左に綴じ代を取るため、帳票画像と同じだけ印字(押印含む)を右へずらす
+   (templates/portrait/build_portrait_template.py の BINDING_MM と同じ値にすること) */
+.orient-portrait .overlay-layer {
+  left: 6mm;
+}
+
+/* 内訳ページ(縦の2ページ目以降): 印刷時は1ページずつ改ページ */
+.cont-page {
+  page-break-before: always;
+}
+
+/* 縦のときだけ表示する要素(内訳ページの追加・削除ボタンなど) */
+.portrait-only {
+  display: none;
+}
+
+.orient-portrait .portrait-only {
+  display: flex;
+}
+
+.page-buttons {
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.page-buttons button {
+  padding: 6px 12px;
+  border: 1px solid #2563eb;
+  color: #2563eb;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.page-buttons button:disabled {
+  border-color: #d1d5db;
+  color: #9ca3af;
+  cursor: default;
+}
+
+/* 明細入力表のページの区切り行 */
+.items-input-table tr.page-sep td {
+  background: #e5e7eb;
+  color: #374151;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 3px 8px;
+}
+
+/* 縦の帳票の見積総額(下線の上に大きく印字) */
+.ov.ov-total {
+  font-size: 7mm;
+  font-weight: bold;
+}
+
+/* 添付は横向きに回転して保存しているため、縦の帳票では90°戻して表示する */
+.orient-portrait .attachment-page img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 297mm;
+  height: 210mm;
+  max-width: none;
+  max-height: none;
+  transform: translate(-50%, -50%) rotate(-90deg);
 }
 
 @media print {

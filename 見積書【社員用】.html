@@ -10,19 +10,25 @@
 <body class="employee-app">
 
 <div class="toolbar no-print">
-  <h1>社員用見積書アプリ(雄電社様式) <span class="app-version">v2026.11.12</span></h1>
+  <h1>社員用見積書アプリ(雄電社様式) <span class="app-version">v2026.11.18</span></h1>
   <div class="toolbar-buttons">
     <button id="btnOpenFile">ファイルを開く</button>
     <input type="file" id="fileInput" accept="application/json" style="display:none">
     <button id="btnPrint">プレビュー</button>
     <button id="btnMail">📧 メール送信</button>
+    <label class="orientation-select">帳票の向き
+      <select id="orientation">
+        <option value="portrait">A4縦</option>
+        <option value="landscape">A4横(旧様式)</option>
+      </select>
+    </label>
   </div>
   <!-- themeColor は JS が参照するため非表示で保持 -->
   <select id="themeColor" style="display:none">
     <option value="blue" selected>青</option>
     <option value="red">赤</option>
   </select>
-  <p class="hint">「ファイルを開く」で業者から受け取った見積書JSONファイルを読み込みます。「工事情報」は修正できます。「業者(自社)情報」「明細内容」は閲覧のみで編集はできません(印刷・出力は可能です)。「プレビュー」を押すと印刷プレビューが開きます。</p>
+  <p class="hint">「ファイルを開く」で業者から受け取った見積書JSONファイルを読み込みます。「工事情報」と「業者見積日」は修正できます。それ以外の「業者(自社)情報」と「明細内容」は閲覧のみで編集はできません(印刷・出力は可能です)。「プレビュー」を押すと印刷プレビューが開きます。</p>
   <p class="hint hint-notice">添付ファイルは閲覧のみで、削除はできません。</p>
   <p class="hint">「📧 メール送信」: 印刷プレビューが開き、「印刷実行」でPDFとして保存すると、続けてOutlook(既定のメールソフト)の新規メール画面が開きます。保存したPDFファイルはメールへ手動で添付してください(ブラウザの仕様上、自動添付はできません)。</p>
 </div>
@@ -55,9 +61,9 @@
       </fieldset>
 
       <fieldset>
-        <legend>業者(自社)情報 <span class="readonly-badge">閲覧のみ</span></legend>
+        <legend>業者(自社)情報 <span class="readonly-badge">閲覧のみ(業者見積日は修正可)</span></legend>
         <div class="two-col">
-          <label>業者見積日 <input type="date" id="vendorQuoteDate" disabled></label>
+          <label>業者見積日 <span class="editable-badge">修正可</span> <input type="date" id="vendorQuoteDate"></label>
           <label>業者見積番号(第 ◯ 号) <input type="text" id="vendorQuoteNo" disabled></label>
         </div>
         <label>住所 <input type="text" id="vendorAddress" disabled></label>
@@ -97,9 +103,9 @@
     </fieldset>
 
     <fieldset>
-      <legend>法定福利費・註記 <span class="readonly-badge">閲覧のみ</span></legend>
+      <legend>法定福利費・注記 <span class="readonly-badge">閲覧のみ</span></legend>
       <label>法定福利費(内訳・税抜見積総額に含む) <input type="number" id="welfareCost" min="0" placeholder="円" disabled></label>
-      <label>註記 <textarea id="notes" rows="4" placeholder="特記事項など" disabled></textarea></label>
+      <label>注記 <textarea id="notes" rows="4" placeholder="特記事項など" disabled></textarea></label>
     </fieldset>
 
     <fieldset>
@@ -153,12 +159,12 @@
       <button class="btn-modal-close" id="btnClosePreview">✕ 閉じる</button>
     </div>
     <div class="preview-modal-body">
-      <p class="preview-modal-label">▼ 1ページ目</p>
+      <p class="preview-modal-label" id="previewLabelA">▼ 1ページ目</p>
       <div id="previewPageA" class="quote-page">
         <img id="previewBgA" class="bg-image" src="assets/blue_bg.png" alt="">
         <div id="previewLayerA" class="overlay-layer"></div>
       </div>
-      <p class="preview-modal-label">▼ 2ページ目</p>
+      <p class="preview-modal-label" id="previewLabelB">▼ 2ページ目</p>
       <div id="previewPageB" class="quote-page">
         <img id="previewBgB" class="bg-image" src="" alt="">
         <div id="previewLayerB" class="overlay-layer"></div>
@@ -188,6 +194,10 @@
 <!-- 背景画像参照用: JSがsrcを読む -->
 <img id="bgBlueSrc" src="assets/blue_bg.png" style="display:none" alt="">
 <img id="bgRedSrc"  src="assets/red_bg.png"  style="display:none" alt="">
+<img id="bgBluePortraitSrc" src="assets/blue_bg_portrait.png" style="display:none" alt="">
+<img id="bgRedPortraitSrc"  src="assets/red_bg_portrait.png"  style="display:none" alt="">
+<img id="bgBluePortraitContSrc" src="assets/blue_bg_portrait_cont.png" style="display:none" alt="">
+<img id="bgRedPortraitContSrc"  src="assets/red_bg_portrait_cont.png"  style="display:none" alt="">
 
 <script src="date-stamp.js"></script>
 <script src="script-employee.js"></script>
