@@ -973,7 +973,9 @@ table.a4f-b4 .a4f-kensa .a4f-kv.a4f-date { text-align: right; }
   <div class="toolbar-buttons">
     <button id="btnOpenFile">ファイルを開く</button>
     <input type="file" id="fileInput" accept="application/json" style="display:none">
+    <button id="btnSaveFile">保存</button>
     <button id="btnPrint">プレビュー</button>
+    <button id="btnPrintDirect">印刷</button>
     <button id="btnMail">📧 メール送信</button>
     <label class="orientation-select">帳票の向き
       <select id="orientation">
@@ -987,7 +989,7 @@ table.a4f-b4 .a4f-kensa .a4f-kv.a4f-date { text-align: right; }
     <option value="blue" selected>青</option>
     <option value="red">赤</option>
   </select>
-  <p class="hint">「ファイルを開く」で業者から受け取った見積書JSONファイルを読み込みます。「工事情報」と「業者見積日」は修正できます。それ以外の「業者(自社)情報」と「明細内容」は閲覧のみで編集はできません(印刷・出力は可能です)。「プレビュー」を押すと印刷プレビューが開きます。業者が見積依頼書(本-購買-A0004)を取り込んでいる場合は、「見積依頼書を表示・印刷」で確認・印刷できます。</p>
+  <p class="hint">「ファイルを開く」で業者から受け取った見積書JSONファイルを読み込みます。「工事情報」と「業者見積日」は修正できます。それ以外の「業者(自社)情報」と「明細内容」は閲覧のみで編集はできません(印刷・出力は可能です)。「保存」は修正した内容を見積書JSONファイルとして保存します(ファイル名は「工番_工事名(頭6文字)_業者名_業者見積日」)。「プレビュー」を押すと印刷プレビューが開き、「印刷」はプレビューを開かずにそのまま印刷します(PDFで保存するときも同じファイル名になります)。業者が見積依頼書(本-購買-A0004)を取り込んでいる場合は、「見積依頼書を表示・印刷」で確認・印刷できます。</p>
   <p class="hint hint-notice">添付ファイルは閲覧、印刷のみで、削除はできません。</p>
   <p class="hint hint-heading">上長へデータで送付する場合</p>
   <p class="hint hint-sub">「📧 メール送信」:印刷プレビューが開き、「印刷実行」でPDFとして保存すると、続けてOutlook(既定のメールソフト)の新規メール画面が開きます。保存したPDFファイルはメールへ手動で添付してください(ブラウザの仕様上、自動添付はできません)。</p>
@@ -2739,6 +2741,69 @@ function todayIso() {
   return d.toISOString().slice(0, 10);
 }
 
+// ===== 保存・印刷のファイル名: 「工番_工事名(頭6文字)_業者名_業者見積日(yyyymmdd)」(ユーザー指定) =====
+// 印刷(PDFで保存)のときはページ名をこの名前にする(ブラウザがPDFの名前の候補にする)
+function fileBaseName() {
+  const clean = (s) => String(s || "").replace(/[\\/:*?"<>|\r\n\t]/g, "").replace(/[\s　]+/g, "");
+  const projectName = Array.from(clean(getField("projectName"))).slice(0, 6).join("");
+  const date = (getField("vendorQuoteDate") || todayIso()).replace(/-/g, "");
+  const parts = [clean(getField("projectNo")), projectName, clean(getField("vendorName")), date].filter(Boolean);
+  return parts.join("_") || "見積書";
+}
+
+function hasQuoteData() {
+  return !!(getField("vendorName") || getField("projectNo") || items.some(it => !isEmptyItem(it)));
+}
+
+// 修正した内容を見積書JSONとして保存する(業者用の「ファイルに保存」と同じ形式。見積依頼書も含める)
+async function saveToFile() {
+  if (!hasQuoteData()) { alert("保存する見積書がありません。先に「ファイルを開く」で見積書を読み込んでください。"); return; }
+  if (!confirmQuoteDate("保存")) return;
+  const data = collectFormData();
+  data.items = items;
+  data.a0004 = a0004;
+  const json = JSON.stringify(data, null, 2);
+  const fileName = fileBaseName() + ".json";
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: fileName,
+        types: [{ description: "見積書データ", accept: { "application/json": [".json"] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(json);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== "AbortError") alert("保存に失敗しました: " + err.message);
+    }
+    return;
+  }
+  const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// プレビューを開かずにそのまま印刷する(印刷の中身はプレビューと同じものを作る)
+function printDirect() {
+  if (!confirmQuoteDate("印刷")) return;
+  pendingMailAfterPrint = false;
+  openPrintPreview();
+  closePrintPreview();
+  window.print();
+}
+
+const ORIGINAL_TITLE = document.title;
+window.addEventListener("beforeprint", () => {
+  const suffix = document.body.classList.contains("print-a0004") ? "_見積依頼書" : "";
+  document.title = fileBaseName() + suffix;
+});
+window.addEventListener("afterprint", () => { document.title = ORIGINAL_TITLE; });
+
 async function openFromFile() {
   if (window.showOpenFilePicker) {
     try {
@@ -2790,6 +2855,8 @@ document.addEventListener("DOMContentLoaded", () => {
     pendingMailAfterPrint = false;
     openPrintPreview();
   });
+  document.getElementById("btnSaveFile").addEventListener("click", saveToFile);
+  document.getElementById("btnPrintDirect").addEventListener("click", printDirect);
   document.getElementById("btnMail").addEventListener("click", () => {
     if (confirmQuoteDate("メール送信")) startMailFlow();
   });
