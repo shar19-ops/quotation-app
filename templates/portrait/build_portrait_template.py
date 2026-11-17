@@ -7,7 +7,8 @@
 - 配置は「見積書レイアウト参考.pdf」(雄電社の御見積書)に合わせている:
   上段左に宛名・見積総額(下線+大きな数字)・工事情報(下線の行)、上段右に業者見積日/番号・業者情報・
   業者コード・業者担当者印、下段に明細表(15行+合計)・注記欄(5行)・社内確認用の押印枠4つ(正方形)。
-- タイトル「見 積 書」、社名ロゴ「株式会社 雄電社 御中」、「下記の通りお見積り申し上げます。」は
+- タイトル「御 見 積 書」(見積書の3文字 + ロゴの「御中」の「御」)、社名ロゴ「株式会社 雄電社 御中」、
+  「下記の通りお見積り申し上げます。」は
   A4横の帳票(assets/{blue,red}_bg.png)から切り出して使う。それ以外の文字・罫線はここで描く。
 - 座標はすべて mm。アプリ側(script.js / script-employee.js の PORTRAIT_*)の印字位置も同じ mm の値で
   定義しているので、ここで位置を変えたら両スクリプトも合わせて直すこと。
@@ -33,11 +34,21 @@ def px(mm):
 
 # 横帳票から切り出す部品: (切り出し範囲 [横帳票 px@200dpi], 配置先 左上 (mm), 縮尺)
 CROPS = {
-    "title":   ((963, 142, 1295, 203), None, 0.9),   # 見 積 書 (左右中央・上端 14mm)
     "logo":    ((247, 223, 921, 292), (12, 25), 0.8),  # 株式会社 雄電社 御中
     "message": ((249, 303, 768, 339), (13, 34.5), 0.75),  # 下記の通りお見積り申し上げます。
 }
 TITLE_TOP = 13
+
+# タイトル「御 見 積 書」: 横帳票のタイトル「見 積 書」の3文字に、社名ロゴ「御中」の「御」(同じ書体)を加えて組む
+# (切り出し範囲 [横帳票 px@200dpi], 縮尺)。「御」は少し小さいので見積書の文字の高さ(約53px)にそろえる
+TITLE_GLYPHS = [
+    ((827, 240, 872, 289), 1.08),   # 御 (社名ロゴの「御中」から)
+    ((967, 146, 1016, 200), 1.0),   # 見
+    ((1101, 146, 1154, 200), 1.0),  # 積
+    ((1241, 146, 1292, 200), 1.0),  # 書
+]
+TITLE_PITCH = 137.5  # 文字の中心の間隔(横帳票のタイトルと同じ)
+TITLE_SCALE = 0.9
 
 # 左上: 見積総額・法定福利費
 TOTAL = {"label": (13, 48.5), "line_y": 52.5, "line_x": (12, 108), "yen": (102.5, 48.5)}
@@ -85,7 +96,7 @@ NOTES_BOX = (12, 225, 198, 253)  # 注記欄(5行)
 CONFIRM_BOXES = {"left": 12, "top": 257, "w": 23, "h": 23, "count": 4}  # 社内確認用の押印枠(23mm角)
 
 # 内訳ページ(「ページ追加」で増える2ページ目以降): タイトル・工事名・業者名と明細表だけ
-CONT_SUFFIX = (126, 17, "（内　訳）")  # タイトル「見 積 書」の右
+CONT_SUFFIX = (133, 17, "（内　訳）")  # タイトル「御 見 積 書」の右
 CONT_HEADER_Y = 29                      # 工事名・業者名の行(文字の中心)
 CONT_PROJECT = {"label_x": 13, "colon_x": 25, "line_x": (12, 108)}
 CONT_VENDOR = {"label_x": 112, "colon_x": 124, "line_x": (112, 198)}
@@ -113,6 +124,21 @@ class Sheet:
 
     def rect(self, x0, y0, x1, y1, width=1):
         self.d.rectangle([px(x0), px(y0), px(x1), px(y1)], outline=self.ink, width=width)
+
+    def title(self):
+        """タイトル「御 見 積 書」を組んで左右中央(上端 TITLE_TOP)に置く"""
+        parts = []
+        for box, scale in TITLE_GLYPHS:
+            g = self.src.crop(box)
+            parts.append(g.resize((round(g.width * scale * TITLE_SCALE), round(g.height * scale * TITLE_SCALE)), Image.LANCZOS))
+        pitch = TITLE_PITCH * TITLE_SCALE
+        cell = max(g.width for g in parts)
+        height = max(g.height for g in parts)
+        width = round(pitch * (len(parts) - 1) + cell)
+        left = (W - width) // 2
+        for i, g in enumerate(parts):
+            cx = left + cell / 2 + pitch * i
+            self.page.paste(g, (round(cx - g.width / 2), px(TITLE_TOP) + (height - g.height) // 2))
 
     def crop(self, name):
         box, pos, scale = CROPS[name]
@@ -145,6 +171,7 @@ class Sheet:
 
 def build_main(color_name):
     s = Sheet(color_name)
+    s.title()
     for name in CROPS:
         s.crop(name)
 
@@ -207,7 +234,7 @@ def build_main(color_name):
 
 def build_cont(color_name):
     s = Sheet(color_name)
-    s.crop("title")
+    s.title()
     s.text(CONT_SUFFIX[0], CONT_SUFFIX[1], CONT_SUFFIX[2], size=4.6)
     for spec, label in ((CONT_PROJECT, "工事名"), (CONT_VENDOR, "業者名")):
         s.text(spec["label_x"], CONT_HEADER_Y, label)
