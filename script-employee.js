@@ -1083,6 +1083,69 @@ function todayIso() {
   return d.toISOString().slice(0, 10);
 }
 
+// ===== 保存・印刷のファイル名: 「工番_工事名(頭6文字)_業者名_業者見積日(yyyymmdd)」(ユーザー指定) =====
+// 印刷(PDFで保存)のときはページ名をこの名前にする(ブラウザがPDFの名前の候補にする)
+function fileBaseName() {
+  const clean = (s) => String(s || "").replace(/[\\/:*?"<>|\r\n\t]/g, "").replace(/[\s　]+/g, "");
+  const projectName = Array.from(clean(getField("projectName"))).slice(0, 6).join("");
+  const date = (getField("vendorQuoteDate") || todayIso()).replace(/-/g, "");
+  const parts = [clean(getField("projectNo")), projectName, clean(getField("vendorName")), date].filter(Boolean);
+  return parts.join("_") || "見積書";
+}
+
+function hasQuoteData() {
+  return !!(getField("vendorName") || getField("projectNo") || items.some(it => !isEmptyItem(it)));
+}
+
+// 修正した内容を見積書JSONとして保存する(業者用の「ファイルに保存」と同じ形式。見積依頼書も含める)
+async function saveToFile() {
+  if (!hasQuoteData()) { alert("保存する見積書がありません。先に「ファイルを開く」で見積書を読み込んでください。"); return; }
+  if (!confirmQuoteDate("保存")) return;
+  const data = collectFormData();
+  data.items = items;
+  data.a0004 = a0004;
+  const json = JSON.stringify(data, null, 2);
+  const fileName = fileBaseName() + ".json";
+  if (window.showSaveFilePicker) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: fileName,
+        types: [{ description: "見積書データ", accept: { "application/json": [".json"] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(json);
+      await writable.close();
+    } catch (err) {
+      if (err.name !== "AbortError") alert("保存に失敗しました: " + err.message);
+    }
+    return;
+  }
+  const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// プレビューを開かずにそのまま印刷する(印刷の中身はプレビューと同じものを作る)
+function printDirect() {
+  if (!confirmQuoteDate("印刷")) return;
+  pendingMailAfterPrint = false;
+  openPrintPreview();
+  closePrintPreview();
+  window.print();
+}
+
+const ORIGINAL_TITLE = document.title;
+window.addEventListener("beforeprint", () => {
+  const suffix = document.body.classList.contains("print-a0004") ? "_見積依頼書" : "";
+  document.title = fileBaseName() + suffix;
+});
+window.addEventListener("afterprint", () => { document.title = ORIGINAL_TITLE; });
+
 async function openFromFile() {
   if (window.showOpenFilePicker) {
     try {
@@ -1134,6 +1197,8 @@ document.addEventListener("DOMContentLoaded", () => {
     pendingMailAfterPrint = false;
     openPrintPreview();
   });
+  document.getElementById("btnSaveFile").addEventListener("click", saveToFile);
+  document.getElementById("btnPrintDirect").addEventListener("click", printDirect);
   document.getElementById("btnMail").addEventListener("click", () => {
     if (confirmQuoteDate("メール送信")) startMailFlow();
   });

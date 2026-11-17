@@ -84,6 +84,17 @@ body {
   color: #fcd34d;
 }
 
+/* 案内の小見出し(社員用「上長へデータで送付する場合」)と、その下の説明 */
+.hint.hint-heading {
+  margin-top: 12px;
+  font-weight: bold;
+  color: #f3f4f6;
+}
+
+.hint.hint-sub {
+  margin-top: 2px;
+}
+
 .layout {
   display: flex;
   gap: 16px;

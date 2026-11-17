@@ -14,7 +14,9 @@
   <div class="toolbar-buttons">
     <button id="btnOpenFile">ファイルを開く</button>
     <input type="file" id="fileInput" accept="application/json" style="display:none">
+    <button id="btnSaveFile">保存</button>
     <button id="btnPrint">プレビュー</button>
+    <button id="btnPrintDirect">印刷</button>
     <button id="btnMail">📧 メール送信</button>
     <label class="orientation-select">帳票の向き
       <select id="orientation">
@@ -28,9 +30,10 @@
     <option value="blue" selected>青</option>
     <option value="red">赤</option>
   </select>
-  <p class="hint">「ファイルを開く」で業者から受け取った見積書JSONファイルを読み込みます。「工事情報」と「業者見積日」は修正できます。それ以外の「業者(自社)情報」と「明細内容」は閲覧のみで編集はできません(印刷・出力は可能です)。「プレビュー」を押すと印刷プレビューが開きます。業者が見積依頼書(本-購買-A0004)を取り込んでいる場合は、「見積依頼書を表示・印刷」で確認・印刷できます。</p>
-  <p class="hint hint-notice">添付ファイルは閲覧のみで、削除はできません。</p>
-  <p class="hint">「📧 メール送信」: 印刷プレビューが開き、「印刷実行」でPDFとして保存すると、続けてOutlook(既定のメールソフト)の新規メール画面が開きます。保存したPDFファイルはメールへ手動で添付してください(ブラウザの仕様上、自動添付はできません)。</p>
+  <p class="hint">「ファイルを開く」で業者から受け取った見積書JSONファイルを読み込みます。「工事情報」と「業者見積日」は修正できます。それ以外の「業者(自社)情報」と「明細内容」は閲覧のみで編集はできません(印刷・出力は可能です)。「保存」は修正した内容を見積書JSONファイルとして保存します(ファイル名は「工番_工事名(頭6文字)_業者名_業者見積日」)。「プレビュー」を押すと印刷プレビューが開き、「印刷」はプレビューを開かずにそのまま印刷します(PDFで保存するときも同じファイル名になります)。業者が見積依頼書(本-購買-A0004)を取り込んでいる場合は、「見積依頼書を表示・印刷」で確認・印刷できます。</p>
+  <p class="hint hint-notice">添付ファイルは閲覧、印刷のみで、削除はできません。</p>
+  <p class="hint hint-heading">上長へデータで送付する場合</p>
+  <p class="hint hint-sub">「📧 メール送信」:印刷プレビューが開き、「印刷実行」でPDFとして保存すると、続けてOutlook(既定のメールソフト)の新規メール画面が開きます。保存したPDFファイルはメールへ手動で添付してください(ブラウザの仕様上、自動添付はできません)。</p>
 </div>
 
 <div class="layout">
