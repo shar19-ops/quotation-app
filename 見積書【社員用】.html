@@ -28,7 +28,7 @@
     <option value="blue" selected>青</option>
     <option value="red">赤</option>
   </select>
-  <p class="hint">「ファイルを開く」で業者から受け取った見積書JSONファイルを読み込みます。「工事情報」は修正できます。「業者(自社)情報」「明細内容」は閲覧のみで編集はできません(印刷・出力は可能です)。「プレビュー」を押すと印刷プレビューが開きます。</p>
+  <p class="hint">「ファイルを開く」で業者から受け取った見積書JSONファイルを読み込みます。「工事情報」と「業者見積日」は修正できます。それ以外の「業者(自社)情報」と「明細内容」は閲覧のみで編集はできません(印刷・出力は可能です)。「プレビュー」を押すと印刷プレビューが開きます。</p>
   <p class="hint hint-notice">添付ファイルは閲覧のみで、削除はできません。</p>
   <p class="hint">「📧 メール送信」: 印刷プレビューが開き、「印刷実行」でPDFとして保存すると、続けてOutlook(既定のメールソフト)の新規メール画面が開きます。保存したPDFファイルはメールへ手動で添付してください(ブラウザの仕様上、自動添付はできません)。</p>
 </div>
@@ -61,9 +61,9 @@
       </fieldset>
 
       <fieldset>
-        <legend>業者(自社)情報 <span class="readonly-badge">閲覧のみ</span></legend>
+        <legend>業者(自社)情報 <span class="readonly-badge">閲覧のみ(業者見積日は修正可)</span></legend>
         <div class="two-col">
-          <label>業者見積日 <input type="date" id="vendorQuoteDate" disabled></label>
+          <label>業者見積日 <span class="editable-badge">修正可</span> <input type="date" id="vendorQuoteDate"></label>
           <label>業者見積番号(第 ◯ 号) <input type="text" id="vendorQuoteNo" disabled></label>
         </div>
         <label>住所 <input type="text" id="vendorAddress" disabled></label>

@@ -1091,8 +1091,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("btnCloseAttachmentView").addEventListener("click", closeAttachmentView);
 
-  // 工事情報+担当者確認印のみ編集可能。変更のたびにプレビューへ反映する。
-  const editableIds = ["branchType", "projectNo", "projectName", "siteLocation", "periodStart", "periodEnd", "staffStampName", "staffStampDate", "staffStampTitle"];
+  // 工事情報・業者見積日・担当者確認印のみ編集可能。変更のたびにプレビューへ反映する。
+  const editableIds = ["branchType", "projectNo", "projectName", "siteLocation", "periodStart", "periodEnd", "vendorQuoteDate", "staffStampName", "staffStampDate", "staffStampTitle"];
   editableIds.forEach(id => {
     document.getElementById(id).addEventListener("input", renderPreview);
     document.getElementById(id).addEventListener("change", renderPreview);
