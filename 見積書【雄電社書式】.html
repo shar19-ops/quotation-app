@@ -139,6 +139,11 @@
         <tbody id="itemsInputBody"></tbody>
       </table>
       <button type="button" id="btnAddItem" style="display:none;">+ 行を追加</button>
+      <div class="page-buttons portrait-only">
+        <button type="button" id="btnAddPage">＋ 内訳ページを追加</button>
+        <button type="button" id="btnRemovePage">最終ページを削除</button>
+        <span class="form-hint" id="pageInfo"></span>
+      </div>
     </fieldset>
 
     <fieldset>
@@ -181,12 +186,12 @@
       <button class="btn-modal-close" id="btnClosePreview">✕ 閉じる</button>
     </div>
     <div class="preview-modal-body">
-      <p class="preview-modal-label">▼ 1ページ目</p>
+      <p class="preview-modal-label" id="previewLabelA">▼ 1ページ目</p>
       <div id="previewPageA" class="quote-page">
         <img id="previewBgA" class="bg-image" src="assets/blue_bg.png" alt="">
         <div id="previewLayerA" class="overlay-layer"></div>
       </div>
-      <p class="preview-modal-label">▼ 2ページ目</p>
+      <p class="preview-modal-label" id="previewLabelB">▼ 2ページ目</p>
       <div id="previewPageB" class="quote-page">
         <img id="previewBgB" class="bg-image" src="" alt="">
         <div id="previewLayerB" class="overlay-layer"></div>
@@ -228,6 +233,8 @@
 <img id="bgRedSrc"  src="assets/red_bg.png"  style="display:none" alt="">
 <img id="bgBluePortraitSrc" src="assets/blue_bg_portrait.png" style="display:none" alt="">
 <img id="bgRedPortraitSrc"  src="assets/red_bg_portrait.png"  style="display:none" alt="">
+<img id="bgBluePortraitContSrc" src="assets/blue_bg_portrait_cont.png" style="display:none" alt="">
+<img id="bgRedPortraitContSrc"  src="assets/red_bg_portrait_cont.png"  style="display:none" alt="">
 
 <!-- PDF.js workerのbase64データ置き場: 開発版は空(JSが相対パスpdfjs/pdf.worker.min.jsを使用)。
      配布用ビルド時にテキストを埋め込み、JSがBlob化して使う(単一HTML化のため) -->

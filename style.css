@@ -729,6 +729,51 @@ legend {
   left: 6mm;
 }
 
+/* 内訳ページ(縦の2ページ目以降): 印刷時は1ページずつ改ページ */
+.cont-page {
+  page-break-before: always;
+}
+
+/* 縦のときだけ表示する要素(内訳ページの追加・削除ボタンなど) */
+.portrait-only {
+  display: none;
+}
+
+.orient-portrait .portrait-only {
+  display: flex;
+}
+
+.page-buttons {
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.page-buttons button {
+  padding: 6px 12px;
+  border: 1px solid #2563eb;
+  color: #2563eb;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.page-buttons button:disabled {
+  border-color: #d1d5db;
+  color: #9ca3af;
+  cursor: default;
+}
+
+/* 明細入力表のページの区切り行 */
+.items-input-table tr.page-sep td {
+  background: #e5e7eb;
+  color: #374151;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 3px 8px;
+}
+
 /* 縦の帳票の見積総額(下線の上に大きく印字) */
 .ov.ov-total {
   font-size: 7mm;

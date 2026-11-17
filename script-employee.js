@@ -147,6 +147,10 @@ const PORTRAIT_COORDS = {
   vendorAddressY: textTopAt(46), vendorNameY: textTopAt(55), vendorTelY: textTopAt(64),
   vendorCodeCenter: P((157 + 198) / 2), vendorCodeWidth: P(38), vendorCodeY: textTopAt(80),
 
+  // 複数ページのとき: ページ番号(右上)、「－次葉に続く－」(押印枠の右)
+  pageNoRight: P(198), pageNoY: textTopAt(17),
+  nextPage: { center: P(151), y: textTopAt(268.5) },
+
   // 注記(最大5行)
   notes: { x: P(15), y: P(231) }
 };
@@ -180,6 +184,17 @@ const PORTRAIT_ITEMS_LAYOUT = (() => {
   };
 })();
 
+// 内訳ページ(「ページ追加」で増える縦の2ページ目以降): build_portrait_template.py の CONT_* と対応(mm)
+const CONT_ROWS = 37; // 内訳ページ1枚の明細行数(最終行の小計/合計を除く)
+const PORTRAIT_CONT = {
+  headerY: textTopAt(29),
+  projectX: P(28), projectWidth: P(108 - 28 - 1),
+  vendorX: P(127), vendorWidth: P(198 - 127 - 1),
+  pageNoRight: P(198), pageNoY: textTopAt(17),
+  nextPage: { center: P(105), y: textTopAt(286) },
+  items: { ...PORTRAIT_ITEMS_LAYOUT, rowTop: P(36 + 8) }
+};
+
 const LAYOUTS = {
   landscape: {
     pageW: 1754, pageH: 1240,
@@ -209,6 +224,10 @@ const LAYOUTS = {
       blue: () => document.getElementById("bgBluePortraitSrc").src,
       red:  () => document.getElementById("bgRedPortraitSrc").src
     },
+    contBg: {
+      blue: () => document.getElementById("bgBluePortraitContSrc").src,
+      red:  () => document.getElementById("bgRedPortraitContSrc").src
+    },
     // 担当者印①②③は業者担当者印の3マス(右から①②③、中心 x 190.5/175.5/160.5mm・y 97.5mm、サイズ50px)、
     // 社判(サイズ110px)は社名の行の右端寄り(中心 186mm, 58mm。住所に掛からない位置)
     stampDefaults: {
@@ -226,6 +245,13 @@ const layout = () => LAYOUTS[orientation];
 // 押印位置は向きごとに別々に保持する(横で調整した位置を縦に持ち込まない)
 const STAMP_POS_IDS = ["stampX", "stampY", "stampX2", "stampY2", "stampX3", "stampY3", "stampX4", "stampY4"];
 let stampPos = {}; // { landscape: {stampX: .., ...}, portrait: {...} }
+
+// 内訳ページ(縦のみ)の枚数。1ページ目の後ろに「ページ追加」で増やす
+let extraPages = 0;
+const pageCount = () => (orientation === "portrait" ? 1 + extraPages : 1);
+const itemCapacity = () => (orientation === "portrait" ? layout().rows + extraPages * CONT_ROWS : layout().rows);
+// 明細の行番号(0始まり)が何ページ目か(1始まり。縦のみ)
+const pageOfItem = (idx) => (idx < layout().rows ? 1 : 2 + Math.floor((idx - layout().rows) / CONT_ROWS));
 
 let items = [];
 
@@ -249,7 +275,7 @@ function isEmptyItem(item) {
 
 function trimTrailingEmptyRows(arr) {
   const result = arr.slice();
-  while (result.length > layout().rows && isEmptyItem(result[result.length - 1])) {
+  while (result.length > itemCapacity() && isEmptyItem(result[result.length - 1])) {
     result.pop();
   }
   return result;
@@ -276,6 +302,12 @@ function renderItemsInput() {
   const body = document.getElementById("itemsInputBody");
   body.innerHTML = "";
   items.forEach((item, idx) => {
+    if (pageCount() > 1 && (idx === 0 || (idx >= layout().rows && (idx - layout().rows) % CONT_ROWS === 0))) {
+      const sep = document.createElement("tr");
+      sep.className = "page-sep";
+      sep.innerHTML = `<td colspan="6">${pageOfItem(idx)}ページ目${idx === 0 ? "" : "(内訳)"}</td>`;
+      body.appendChild(sep);
+    }
     const tr = document.createElement("tr");
     const amount = itemAmount(item);
     tr.innerHTML = `
@@ -495,6 +527,7 @@ function renderPreview() {
   const data = collectFormData();
   document.getElementById("bgImage").src = bgSrc(data.themeColor);
   buildOverlay(document.getElementById("overlayLayer"), data);
+  syncContPages(document.getElementById("printSource"), document.getElementById("printArea"), "A", data.themeColor, data, false);
   renderAltPreview();
 }
 
@@ -503,6 +536,91 @@ function renderAltPreview() {
   const altTheme = data.themeColor === "red" ? "blue" : "red";
   document.getElementById("bgImageAlt").src = bgSrc(altTheme);
   buildOverlay(document.getElementById("overlayLayerAlt"), data);
+  syncContPages(document.getElementById("printSource"), document.getElementById("printAreaAlt"), "B", altTheme, data, false);
+}
+
+// ===== 内訳ページ(縦・2ページ目以降) =====
+
+// ページ番号と「－次葉に続く－」(続きがあるページのみ)
+function addPageMarks(layer, pos, page, total) {
+  addOverlayRight(layer, pos.pageNoRight, P(30), pos.pageNoY, `${page} / ${total}`);
+  if (page < total) addOverlayCenter(layer, pos.nextPage.center, P(80), pos.nextPage.y, "－ 次 葉 に 続 く －");
+}
+
+// 内訳ページ(page は2始まり)の印字。最終ページの最終行は全ページの合計、それ以外はそのページの小計
+function buildContOverlay(layer, data, page) {
+  layer.innerHTML = "";
+  const CT = PORTRAIT_CONT;
+  const IL = CT.items;
+  addOverlayFitLeft(layer, CT.projectX, CT.projectWidth, CT.headerY, data.projectName);
+  addOverlayFitLeft(layer, CT.vendorX, CT.vendorWidth, CT.headerY, data.vendorName);
+
+  const start = layout().rows + (page - 2) * CONT_ROWS;
+  let pageSubtotal = 0;
+  for (let r = 0; r < CONT_ROWS; r++) {
+    const item = items[start + r] || emptyItem();
+    const amount = itemAmount(item);
+    pageSubtotal += amount;
+    addItemRowOverlay(layer, IL, IL.rowTop + r * IL.rowHeight + IL.textOffset, item, amount);
+  }
+
+  const total = pageCount();
+  const last = page === total;
+  const grand = items.reduce((sum, it) => sum + itemAmount(it), 0);
+  const totalRowY = IL.rowTop + CONT_ROWS * IL.rowHeight + IL.textOffset;
+  addOverlayCenter(layer, IL.totalLabelCenter, P(40), totalRowY, last ? "合　計" : "小　計");
+  addOverlayFitRight(layer, IL.cols.amountRight, IL.cols.amountWidth, totalRowY, "¥" + yen(last ? grand : pageSubtotal));
+  addPageMarks(layer, CT, page, total);
+}
+
+// 内訳ページの要素を anchor(1ページ目)の直後に並べる。set は "A"(1部目)/"B"(2部目)、withLabels はプレビュー画面用の見出し付き
+function syncContPages(container, anchor, set, color, data, withLabels) {
+  container.querySelectorAll(`[data-cont-set="${set}"]`).forEach(el => el.remove());
+  const total = pageCount();
+  let after = anchor;
+  for (let page = 2; page <= total; page++) {
+    if (withLabels) {
+      const label = document.createElement("p");
+      label.className = "preview-modal-label";
+      label.dataset.contSet = set;
+      label.textContent = `▼ ${set === "A" ? 1 : 2}部目 ${page}/${total}ページ(内訳)`;
+      after.after(label);
+      after = label;
+    }
+    const pageEl = document.createElement("div");
+    pageEl.className = "quote-page cont-page" + (set === "B" && !withLabels ? " print-only" : "");
+    pageEl.dataset.contSet = set;
+    const img = document.createElement("img");
+    img.className = "bg-image";
+    img.alt = "";
+    img.src = LAYOUTS.portrait.contBg[color === "red" ? "red" : "blue"]();
+    const layer = document.createElement("div");
+    layer.className = "overlay-layer";
+    pageEl.append(img, layer);
+    after.after(pageEl);
+    after = pageEl;
+    buildContOverlay(layer, data, page);
+  }
+}
+
+// 明細1行分の印字(1ページ目・内訳ページ共通)
+function addItemRowOverlay(layer, IL, rowY, item, amount) {
+  addOverlayMaybeFit(layer, IL.cols.name, IL.cols.nameWidth, rowY, item.name);
+  addOverlayRight(layer, IL.cols.qtyRight, IL.cols.qtyWidth, rowY, item.qty);
+  addOverlayCenter(layer, IL.cols.unitCenter, IL.cols.unitWidth, rowY, item.unit);
+  if (IL.plainNumbers) {
+    // 縦の帳票: 単価は円単位(銭は四捨五入)、単価・金額ともカンマ付きで右寄せ
+    if (Number(item.qty) !== 1 && item.price) {
+      addOverlayFitRight(layer, IL.cols.priceRight, IL.cols.priceWidth, rowY, yen(unitPrice(item)));
+    }
+    if (amount) addOverlayFitRight(layer, IL.cols.amountRight, IL.cols.amountWidth, rowY, yen(amount));
+  } else {
+    if (Number(item.qty) !== 1) {
+      addOverlayRight(layer, IL.cols.priceRight, IL.cols.priceWidth, rowY, priceFmt(item.price), "ov-price");
+    }
+    addOverlayRight(layer, IL.cols.amountRight, IL.cols.amountWidth, rowY, amount ? amountFmt(amount) : "", "ov-amount");
+  }
+  addOverlayMaybeFit(layer, IL.cols.remarks, IL.cols.remarksWidth, rowY, item.remarks);
 }
 
 // 縦の帳票の上段(業者見積日・番号、工事情報、業者情報、法定福利費)を印字する
@@ -602,36 +720,25 @@ function buildOverlay(layer, data) {
   }
 
   let subtotal = 0;
+  let pageSubtotal = 0; // 1ページ目の小計(内訳ページがあるとき)
   const rowCount = Math.max(items.length, L.rows);
   for (let i = 0; i < rowCount; i++) {
     const item = items[i] || emptyItem();
     const amount = itemAmount(item);
     subtotal += amount;
+    if (i < L.rows) pageSubtotal += amount;
     if (i >= L.rows && orientation === "portrait") continue; // 縦の帳票は枠外に印字しない(合計には含める)
     const rowY = IL.rowTop + i * IL.rowHeight + IL.textOffset;
-    addOverlayMaybeFit(layer, IL.cols.name, IL.cols.nameWidth, rowY, item.name);
-    addOverlayRight(layer, IL.cols.qtyRight, IL.cols.qtyWidth, rowY, item.qty);
-    addOverlayCenter(layer, IL.cols.unitCenter, IL.cols.unitWidth, rowY, item.unit);
-    if (IL.plainNumbers) {
-      // 縦の帳票: 単価は円単位(銭は四捨五入)、単価・金額ともカンマ付きで右寄せ
-      if (Number(item.qty) !== 1 && item.price) {
-        addOverlayFitRight(layer, IL.cols.priceRight, IL.cols.priceWidth, rowY, yen(unitPrice(item)));
-      }
-      if (amount) addOverlayFitRight(layer, IL.cols.amountRight, IL.cols.amountWidth, rowY, yen(amount));
-    } else {
-      if (Number(item.qty) !== 1) {
-        addOverlayRight(layer, IL.cols.priceRight, IL.cols.priceWidth, rowY, priceFmt(item.price), "ov-price");
-      }
-      addOverlayRight(layer, IL.cols.amountRight, IL.cols.amountWidth, rowY, amount ? amountFmt(amount) : "", "ov-amount");
-    }
-    addOverlayMaybeFit(layer, IL.cols.remarks, IL.cols.remarksWidth, rowY, item.remarks);
+    addItemRowOverlay(layer, IL, rowY, item, amount);
   }
 
   const totalRowY = IL.totalRowY !== undefined ? IL.totalRowY : IL.rowTop + L.rows * IL.rowHeight + IL.textOffset;
-  if (IL.totalLabelCenter) addOverlayCenter(layer, IL.totalLabelCenter, P(40), totalRowY, "合　計");
+  const multiPage = pageCount() > 1;
+  if (IL.totalLabelCenter) addOverlayCenter(layer, IL.totalLabelCenter, P(40), totalRowY, multiPage ? "小　計" : "合　計");
   else addOverlay(layer, IL.cols.name, totalRowY, "合計");
   if (IL.plainNumbers) {
-    addOverlayFitRight(layer, IL.cols.amountRight, IL.cols.amountWidth, totalRowY, "¥" + yen(subtotal));
+    addOverlayFitRight(layer, IL.cols.amountRight, IL.cols.amountWidth, totalRowY, "¥" + yen(multiPage ? pageSubtotal : subtotal));
+    if (multiPage) addPageMarks(layer, C, 1, pageCount());
   } else {
     const totalStr = amountFmt(subtotal);
     const totalCharWidth = 26.5; // 概算: グリフ幅+letter-spacing(6.5pt)分
@@ -678,7 +785,11 @@ function writeStampPosFields(pos) {
 
 // 明細の行数を向きの既定行数に合わせる(空行の追加と末尾の空行の削除のみ。入力済みの行は消さない)
 function fitItemsToRows() {
-  while (items.length < layout().rows) items.push(emptyItem());
+  if (orientation === "portrait") {
+    // 入力済みの行が収まるだけの内訳ページを確保する
+    extraPages = Math.max(extraPages, Math.ceil((lastFilledItemCount() - layout().rows) / CONT_ROWS), 0);
+  }
+  while (items.length < itemCapacity()) items.push(emptyItem());
   items = trimTrailingEmptyRows(items);
 }
 
@@ -741,6 +852,7 @@ function collectFormData() {
     data[id] = getField(id);
   });
   data.orientation = orientation;
+  data.extraPages = extraPages;
   data.stampPos = { ...stampPos, [orientation]: readStampPosFields() };
   data.stampDataUrl  = stampDataUrl;
   data.stampDataUrl2 = stampDataUrl2;
@@ -853,9 +965,6 @@ function closeAttachmentView() {
 }
 
 function openPrintPreview() {
-  if (orientation === "portrait" && lastFilledItemCount() > layout().rows) {
-    alert(`A4縦の帳票は明細${layout().rows}行までです。${layout().rows + 1}行目以降は印刷されません(合計金額には含まれます)。\n明細が多い場合は別紙を添付し、品名に「別紙参照」と記載してください。`);
-  }
   renderPreview();
   const data = collectFormData();
   data.items = items;
@@ -864,6 +973,12 @@ function openPrintPreview() {
   document.getElementById("previewBgB").src = bgSrc(color === "blue" ? "red" : "blue");
   buildOverlay(document.getElementById("previewLayerA"), data);
   buildOverlay(document.getElementById("previewLayerB"), data);
+  const modalBody = document.getElementById("previewModal").querySelector(".preview-modal-body");
+  syncContPages(modalBody, document.getElementById("previewPageA"), "A", color, data, true);
+  syncContPages(modalBody, document.getElementById("previewPageB"), "B", color === "blue" ? "red" : "blue", data, true);
+  const total = pageCount();
+  document.getElementById("previewLabelA").textContent = total > 1 ? `▼ 1部目 1/${total}ページ` : "▼ 1ページ目";
+  document.getElementById("previewLabelB").textContent = total > 1 ? `▼ 2部目 1/${total}ページ` : "▼ 2ページ目";
   buildAttachmentPages(document.getElementById("previewModal").querySelector(".preview-modal-body"));
   buildAttachmentPages(document.getElementById("printSource"));
   document.getElementById("previewModal").style.display = "flex";
@@ -901,6 +1016,7 @@ function applyLoadedData(data) {
   stampDataUrl3 = data.stampDataUrl3 || null;
   stampDataUrl4 = data.stampDataUrl4 || null;
   attachments = Array.isArray(data.attachments) ? data.attachments : [];
+  extraPages = Number(data.extraPages) || 0;
   items = Array.isArray(data.items) && data.items.length ? trimTrailingEmptyRows(data.items) : [];
   restoreOrientation(data);
   setField("staffStampDate", todayIso()); // 新しいファイルを開いたら確認日は当日にリセット(担当者名は維持)
