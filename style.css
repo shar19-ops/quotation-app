@@ -799,6 +799,22 @@ legend {
   #printAreaAlt { page-break-before: always; }
 }
 
+/* ===== 業者見積日が工期(開始)を過ぎているときの警告 ===== */
+.date-warning {
+  margin: 4px 0 8px;
+  padding: 6px 10px;
+  border: 1px solid #f87171;
+  border-radius: 6px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 12px;
+  font-weight: bold;
+}
+input.input-warn {
+  border-color: #ef4444 !important;
+  background: #fef2f2 !important;
+}
+
 /* ===== 本-購買-A0004 見積依頼書／注文書付属書(取込・閲覧・印刷) ===== */
 .a0004-row {
   display: flex;

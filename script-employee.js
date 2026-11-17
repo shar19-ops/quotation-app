@@ -524,7 +524,35 @@ function bgSrc(color) {
   return layout().bg[color === "red" ? "red" : "blue"]();
 }
 
+// ===== 業者見積日のチェック: 工期(開始)を過ぎた業者見積日は不可(社内ルール。業者用と同じ) =====
+// 入力欄の下に警告を出し、日付を変えたときと、プレビュー・メール送信の前に確認する(止めはしない)
+function quoteDateProblem() {
+  const quote = getField("vendorQuoteDate");
+  const start = getField("periodStart");
+  if (!quote || !start || quote <= start) return "";
+  // 日付欄に年を1桁ずつ入力している途中(0002年など)は判定しない
+  if (quote < "1900" || start < "1900") return "";
+  const fmt = (iso) => iso.replace(/-/g, "/");
+  return `業者見積日(${fmt(quote)})が工期(開始)(${fmt(start)})を過ぎています。工期(開始)を過ぎた業者見積日は不可です。`;
+}
+
+function renderQuoteDateWarning() {
+  const msg = quoteDateProblem();
+  const el = document.getElementById("quoteDateWarning");
+  if (el) {
+    el.textContent = msg ? "⚠ " + msg : "";
+    el.style.display = msg ? "block" : "none";
+  }
+  ["vendorQuoteDate", "periodStart"].forEach(id => document.getElementById(id).classList.toggle("input-warn", !!msg));
+}
+
+function confirmQuoteDate(action) {
+  const msg = quoteDateProblem();
+  return !msg || confirm(`${msg}\n\nこのまま${action}しますか?`);
+}
+
 function renderPreview() {
+  renderQuoteDateWarning();
   const data = collectFormData();
   document.getElementById("bgImage").src = bgSrc(data.themeColor);
   buildOverlay(document.getElementById("overlayLayer"), data);
@@ -1102,10 +1130,20 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("btnPrint").addEventListener("click", () => {
+    if (!confirmQuoteDate("プレビュー")) return;
     pendingMailAfterPrint = false;
     openPrintPreview();
   });
-  document.getElementById("btnMail").addEventListener("click", startMailFlow);
+  document.getElementById("btnMail").addEventListener("click", () => {
+    if (confirmQuoteDate("メール送信")) startMailFlow();
+  });
+  // 業者見積日・工期(開始)を変えて、工期(開始)を過ぎた見積日になったらその場で知らせる
+  ["vendorQuoteDate", "periodStart"].forEach(id => {
+    document.getElementById(id).addEventListener("change", () => {
+      const msg = quoteDateProblem();
+      if (msg) alert(msg);
+    });
+  });
   document.getElementById("btnClosePreview").addEventListener("click", () => {
     pendingMailAfterPrint = false;
     closePrintPreview();
