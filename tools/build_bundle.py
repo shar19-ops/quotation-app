@@ -1,12 +1,12 @@
 """開発版HTMLから配布用の単一HTMLファイルを作る。
 
 使い方:
-  python tools/build_bundle.py vendor  <出力ファイル名>   # 見積書【雄電社書式】.html → 業者配布用
+  python tools/build_bundle.py vendor  <出力ファイル名>   # 見積書【雄電社書式】.html → 業者配布用(雄電社指定見積書_v1.html など)
   python tools/build_bundle.py staff   <出力ファイル名>   # 見積書【社員用】.html   → 社員用配布用
 
 やっていること(これまで手作業で行っていた単一HTML化と同じ):
   - <link rel="stylesheet" href="style.css"> を <style> に埋め込む
-  - src="assets/*.png" の画像を base64 の data URL に置き換える
+  - src="assets/*" の画像・href="assets/*" のアイコンを base64 の data URL に置き換える
   - <script src="..."></script> を中身ごと埋め込む("</script" は "<\\/script" にエスケープ)
   - <script id="pdfWorkerB64"> に pdfjs/pdf.worker.min.js を base64 で埋め込む
 """
@@ -37,7 +37,7 @@ def build(kind):
     css = read("style.css").replace("\r\n", "\n")
     html = html.replace('<link rel="stylesheet" href="style.css">', "<style>\n" + css.rstrip("\n") + "\n</style>")
 
-    html = re.sub(r'src="(assets/[^"]+)"', lambda m: f'src="{data_url(m.group(1))}"', html)
+    html = re.sub(r'(src|href)="(assets/[^"]+)"', lambda m: f'{m.group(1)}="{data_url(m.group(2))}"', html)
 
     worker = base64.b64encode((ROOT / "pdfjs/pdf.worker.min.js").read_bytes()).decode("ascii")
     html = html.replace(
