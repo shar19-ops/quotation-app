@@ -1940,20 +1940,32 @@ function trimTrailingEmptyRows(arr) {
   return result;
 }
 
+// マイナスの数値は「▲」で表記する(例: ▲50,000)。ユーザー指定
+function minusMark(n, fmt) {
+  return n < 0 ? "▲" + fmt(-n) : fmt(n);
+}
+
 function yen(n) {
   if (!n) return "0";
-  return Math.round(n).toLocaleString("ja-JP");
+  return minusMark(Math.round(n), v => v.toLocaleString("ja-JP"));
+}
+
+// 「¥」付きの金額。マイナスは「▲¥50,000」
+function yenMark(n) {
+  return n < 0 ? "▲¥" + yen(-n) : "¥" + yen(n);
 }
 
 function priceFmt(n) {
   if (!n) return "";
-  const hasFraction = Math.round(n * 100) % 100 !== 0;
-  return n.toLocaleString("ja-JP", { minimumFractionDigits: hasFraction ? 2 : 0, maximumFractionDigits: 2, useGrouping: false });
+  return minusMark(n, v => {
+    const hasFraction = Math.round(v * 100) % 100 !== 0;
+    return v.toLocaleString("ja-JP", { minimumFractionDigits: hasFraction ? 2 : 0, maximumFractionDigits: 2, useGrouping: false });
+  });
 }
 
 function amountFmt(n) {
   if (!n) return "0";
-  return String(Math.round(n));
+  return minusMark(Math.round(n), v => String(v));
 }
 
 // 明細内容は閲覧専用(disabled入力)で描画する
@@ -1974,7 +1986,7 @@ function renderItemsInput() {
       <td class="col-qty"><input type="number" step="any" value="${item.qty}" disabled></td>
       <td class="col-unit"><input type="text" value="${escapeAttr(item.unit)}" disabled></td>
       <td class="col-price"><input type="number" step="0.01" value="${item.price}" disabled></td>
-      <td class="col-amount"><span class="item-amount" data-idx="${idx}">${amount ? amount.toLocaleString("ja-JP") : ""}</span></td>
+      <td class="col-amount"><span class="item-amount" data-idx="${idx}">${amount ? yen(amount) : ""}</span></td>
       <td class="col-remarks"><input type="text" value="${escapeAttr(item.remarks)}" disabled></td>
     `;
     body.appendChild(tr);
@@ -2000,7 +2012,7 @@ function updateAmounts() {
     total += amount;
   });
   const totalSpan = document.getElementById("itemsTotalAmount");
-  if (totalSpan) totalSpan.textContent = total.toLocaleString("ja-JP");
+  if (totalSpan) totalSpan.textContent = yen(total);
 }
 
 function escapeAttr(s) {
@@ -2173,7 +2185,7 @@ function addOverlayMaybeFit(layer, xPx, widthPx, yPx, text, extraClass) {
 }
 
 function digitGridDigits(amount) {
-  const numStr = String(Math.max(0, Math.round(amount || 0)));
+  const numStr = amountFmt(Math.round(amount || 0)); // マイナスは先頭に▲
   const padded = numStr.padStart(11, " ").slice(-11);
   return padded.split("");
 }
@@ -2256,7 +2268,7 @@ function buildContOverlay(layer, data, page) {
   const grand = items.reduce((sum, it) => sum + itemAmount(it), 0);
   const totalRowY = IL.rowTop + CONT_ROWS * IL.rowHeight + IL.textOffset;
   addOverlayCenter(layer, IL.totalLabelCenter, P(40), totalRowY, last ? "合　計" : "小　計");
-  addOverlayFitRight(layer, IL.cols.amountRight, IL.cols.amountWidth, totalRowY, "¥" + yen(last ? grand : pageSubtotal));
+  addOverlayFitRight(layer, IL.cols.amountRight, IL.cols.amountWidth, totalRowY, yenMark(last ? grand : pageSubtotal));
   addPageMarks(layer, CT, page, total);
 }
 
@@ -2424,7 +2436,7 @@ function buildOverlay(layer, data) {
   if (IL.totalLabelCenter) addOverlayCenter(layer, IL.totalLabelCenter, P(40), totalRowY, multiPage ? "小　計" : "合　計");
   else addOverlay(layer, IL.cols.name, totalRowY, "合計");
   if (IL.plainNumbers) {
-    addOverlayFitRight(layer, IL.cols.amountRight, IL.cols.amountWidth, totalRowY, "¥" + yen(multiPage ? pageSubtotal : subtotal));
+    addOverlayFitRight(layer, IL.cols.amountRight, IL.cols.amountWidth, totalRowY, yenMark(multiPage ? pageSubtotal : subtotal));
     if (multiPage) addPageMarks(layer, C, 1, pageCount());
   } else {
     const totalStr = amountFmt(subtotal);
