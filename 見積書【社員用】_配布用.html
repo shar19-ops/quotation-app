@@ -2203,14 +2203,25 @@ function bgSrc(color) {
 
 // ===== 業者見積日のチェック: 工期(開始)を過ぎた業者見積日は不可(社内ルール。業者用と同じ) =====
 // 入力欄の下に警告を出し、日付を変えたときと、プレビュー・メール送信の前に確認する(止めはしない)
+// 2026-11-18 ルール変更(ユーザー指定): 見積依頼書に見積提出期限(A0004 の「見積提出日」)があれば、業者見積日はその日以内。
+// 見積提出期限が空欄(または見積依頼書なし)なら、従来どおり工期(開始)以内(同じ日は可)。
+function quoteDeadline() {
+  const d = a0004 && a0004.values ? String(a0004.values.teishutsu || "") : "";
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "";
+}
+
 function quoteDateProblem() {
   const quote = getField("vendorQuoteDate");
-  const start = getField("periodStart");
-  if (!quote || !start || quote <= start) return "";
-  // 日付欄に年を1桁ずつ入力している途中(0002年など)は判定しない
-  if (quote < "1900" || start < "1900") return "";
+  if (!quote || quote < "1900") return ""; // 日付欄に年を1桁ずつ入力している途中(0002年など)は判定しない
   const fmt = (iso) => iso.replace(/-/g, "/");
-  return `業者見積日(${fmt(quote)})が工期(開始)(${fmt(start)})を過ぎています。工期(開始)を過ぎた業者見積日は不可です。`;
+  const deadline = quoteDeadline();
+  if (deadline) {
+    if (quote <= deadline) return "";
+    return `業者見積日(${fmt(quote)})が見積依頼書の見積提出期限(${fmt(deadline)})を過ぎています。業者見積日は見積提出期限以内にしてください。`;
+  }
+  const start = getField("periodStart");
+  if (!start || start < "1900" || quote <= start) return "";
+  return `業者見積日(${fmt(quote)})が工期(開始)(${fmt(start)})を過ぎています。業者見積日は工期(開始)前にしてください。`;
 }
 
 function renderQuoteDateWarning() {
@@ -2220,7 +2231,8 @@ function renderQuoteDateWarning() {
     el.textContent = msg ? "⚠ " + msg : "";
     el.style.display = msg ? "block" : "none";
   }
-  ["vendorQuoteDate", "periodStart"].forEach(id => document.getElementById(id).classList.toggle("input-warn", !!msg));
+  document.getElementById("vendorQuoteDate").classList.toggle("input-warn", !!msg);
+  document.getElementById("periodStart").classList.toggle("input-warn", !!msg && !quoteDeadline()); // 見積提出期限で判定しているときは工期の欄は赤くしない
 }
 
 function confirmQuoteDate(action) {
