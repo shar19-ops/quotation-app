@@ -1,4 +1,4 @@
-<title>業者用見積書アプリ 操作マニュアル</title>
+<title>雄電社指定見積書 操作マニュアル</title>
 <style>
   :root {
     --bg: #f2f5f9;
@@ -520,12 +520,14 @@
       <li><a href="#overview">アプリの概要</a></li>
       <li><a href="#screen">画面の見方</a></li>
       <li><a href="#workflow">基本操作の流れ</a></li>
+      <li><a href="#request">見積依頼書の取り込み</a></li>
       <li><a href="#fields">入力できる項目</a></li>
-      <li><a href="#items">明細内容の入力</a></li>
+      <li><a href="#items">明細内容と内訳ページ</a></li>
       <li><a href="#stamp">電子印(社判・担当者印)の設定</a></li>
       <li><a href="#attachments">添付ファイルの追加</a></li>
+      <li><a href="#print">プレビュー・印刷</a></li>
       <li><a href="#save">保存する</a></li>
-      <li><a href="#send">社員への送付</a></li>
+      <li><a href="#send">雄電社への送付</a></li>
       <li><a href="#faq">注意事項・Q&amp;A</a></li>
     </ol>
   </nav>
@@ -533,123 +535,150 @@
   <main>
     <header class="doc-header">
       <div class="doc-eyebrow">OPERATION MANUAL</div>
-      <h1>業者用見積書アプリ操作マニュアル</h1>
-      <p class="doc-sub">雄電社様式・見積書入力アプリ(業者用)の使い方をまとめたドキュメントです。見積書の内容を入力し、電子印を押して、社内担当者へ送付するまでの流れを説明します。</p>
+      <h1>雄電社指定見積書 操作マニュアル</h1>
+      <p class="doc-sub">協力会社(業者)の皆さま向けに、見積書アプリ「雄電社指定見積書」の使い方をまとめたドキュメントです。見積書の内容を入力し、電子印を押して、雄電社の担当者へ送付するまでの流れを説明します。</p>
     </header>
 
     <section id="overview">
       <h2><span class="num">01</span>アプリの概要</h2>
-      <p class="lede">このアプリはブラウザだけで動作するオフラインツールです。協力会社(業者)が見積書の内容を入力し、社内担当者へ送るためのデータ(JSONファイル)を作成します。作成したファイルを社員用見積書アプリで開くと、印刷可能な見積書として表示されます。サーバーへの送信は行われず、すべての処理は開いているブラウザ内で完結します。</p>
+      <p class="lede">配布されたファイル <code>雄電社指定見積書_v1.html</code> をブラウザ(Google Chrome または Microsoft Edge)で開くだけで使えます。インストールは不要で、入力した内容がインターネットへ送信されることはありません。すべての処理は開いているブラウザの中で完結します。</p>
+      <p class="lede">作成した見積書は、JSONファイル(<code>.json</code>)として保存して雄電社へ送付します。雄電社の担当者は社員用見積書アプリでこのファイルを開き、内容を確認・印刷します。</p>
       <div class="note">
-        <strong>社員用アプリとの違い</strong> — 社員用アプリでは「工事情報」以外は閲覧のみですが、業者用アプリでは<strong>すべての項目を入力・編集できます</strong>。工事情報に加え、業者(自社)情報・明細内容・法定福利費・註記・添付ファイル・電子印(社判/担当者印)を、このアプリで入力します。
+        <strong>帳票はA4縦が標準です</strong> — 見積書は「御見積書」(A4縦)の様式で印刷されます。以前のA4横の様式は「帳票の向き」で<strong>A4横(旧様式)</strong>を選んだときだけ使います。
       </div>
     </section>
 
     <section id="screen">
       <h2><span class="num">02</span>画面の見方</h2>
-      <p class="lede">画面はツールバーと入力パネルで構成されています。社員用アプリと違い、どの項目にも閲覧のみバッジは付いていません。</p>
+      <p class="lede">画面は、上部のツールバーと、その下の入力欄で構成されています。すべての項目を入力・編集できます。</p>
 
       <div class="mockup">
         <div class="mockup-toolbar">
-          <div class="m-title">見積書入力アプリ(雄電社様式)</div>
+          <div class="m-title">雄電社指定見積書 v1</div>
           <span class="m-btn alt">新規作成</span>
           <span class="m-btn primary">保存</span>
           <span class="m-btn primary">ファイルに保存</span>
-          <span class="m-btn alt">ファイルを開く</span>
-          <span class="m-btn alt">プレビュー</span>
+          <span class="m-btn primary">社内回送用に保存(HTML)</span>
+          <span class="m-btn primary">ファイルを開く</span>
+          <span class="m-btn primary">プレビュー</span>
+          <span class="m-btn alt">帳票の向き: A4縦</span>
         </div>
         <div class="mockup-grid">
           <div class="m-field">
-            <div class="m-legend">工事情報 <span class="m-tag">編集可</span></div>
+            <div class="m-legend">工事情報 <span class="m-tag">CSV・見積依頼書から取込可</span></div>
             <div class="m-line w80"></div><div class="m-line w60"></div><div class="m-line w40"></div>
           </div>
           <div class="m-field">
-            <div class="m-legend">業者(自社)情報+電子印 <span class="m-tag">編集可</span></div>
+            <div class="m-legend">業者(自社)情報+電子印</div>
             <div class="m-line w80"></div><div class="m-line w60"></div><div class="m-line w40"></div>
           </div>
           <div class="m-field">
-            <div class="m-legend">明細内容 <span class="m-tag">編集可</span></div>
+            <div class="m-legend">明細内容 <span class="m-tag">内訳ページ追加</span></div>
             <div class="m-line w80"></div><div class="m-line w60"></div><div class="m-line w40"></div>
           </div>
           <div class="m-field">
-            <div class="m-legend">法定福利費・註記 <span class="m-tag">編集可</span></div>
+            <div class="m-legend">法定福利費・注記</div>
             <div class="m-line w60"></div><div class="m-line w40"></div>
           </div>
           <div class="m-field">
-            <div class="m-legend">添付ファイル(別紙) <span class="m-tag">編集可</span></div>
+            <div class="m-legend">添付ファイル(別紙)</div>
             <div class="m-line w60"></div><div class="m-line w40"></div>
           </div>
         </div>
       </div>
-      <p class="lede" style="margin-top:10px; font-size:12.5px;">※実際の入力フォームを簡略化した図です。各枠の位置関係は実物と同じです。</p>
+      <p class="lede" style="margin-top:10px; font-size:12.5px;">※実際の入力欄を簡略化した図です。</p>
     </section>
 
     <section id="workflow">
       <h2><span class="num">03</span>基本操作の流れ</h2>
-      <p class="lede">新しい見積書を作成してから社員へ送付するまでの標準的な手順です。</p>
+      <p class="lede">新しい見積書を作成してから雄電社へ送付するまでの標準的な手順です。</p>
 
       <div class="flow">
         <div class="flow-step">
           <div class="flow-num">1</div>
           <div class="flow-body">
             <h3>アプリを開く、または新規作成する</h3>
-            <p>アプリを開くと、前回入力していた内容(ブラウザ内に保存された下書き)が自動的に復元されます。まったく新しい見積書を作る場合は<span class="op">「新規作成」</span>を押します。住所・社名・電話・業者コード・電子印(社判・担当者印)は維持されたまま、それ以外の項目がクリアされます。</p>
+            <p>アプリを開くと、前回入力していた内容(ブラウザ内の下書き)が自動的に復元されます。新しい見積書を作る場合は<span class="op">「新規作成」</span>を押します。住所・社名・電話・業者コード・電子印はそのまま残り、それ以外の項目が空になります。</p>
           </div>
         </div>
         <div class="flow-step">
           <div class="flow-num">2</div>
           <div class="flow-body">
-            <h3>工事情報・業者(自社)情報を入力する</h3>
-            <p>事業所、工番、工事名、施工場所、工期、見積有効期限、業者見積日・見積番号、住所、社名、電話、業者コードを入力します。</p>
+            <h3>工事情報を入力する(見積依頼書から取り込める)</h3>
+            <p>雄電社からの見積作成依頼メールに添付された「見積依頼書」のJSONファイルを使い、<span class="op">「見積依頼書(JSON)を読込」</span>で工番・工事名・施工場所が自動で入ります(<a href="#request">04章</a>)。事業所と工期は選択・入力してください。</p>
           </div>
         </div>
         <div class="flow-step">
           <div class="flow-num">3</div>
           <div class="flow-body">
-            <h3>明細内容を入力する</h3>
-            <p>品名・仕様、数量、単位、単価、備考を入力します。金額は数量×単価で自動計算されます。</p>
+            <h3>業者(自社)情報を入力する</h3>
+            <p>業者見積日・見積番号、住所、社名、電話、業者コード、見積有効期限を入力します。</p>
           </div>
         </div>
         <div class="flow-step">
           <div class="flow-num">4</div>
           <div class="flow-body">
-            <h3>法定福利費・註記を入力する</h3>
-            <p>必要に応じて法定福利費と特記事項(註記)を入力します。</p>
+            <h3>明細内容を入力する</h3>
+            <p>品名・仕様、数量、単位、単価、備考を入力します。金額は数量×単価で自動計算されます。1ページ目(15行)に入りきらないときは<span class="op">「＋ 内訳ページを追加」</span>で行を増やします。</p>
           </div>
         </div>
         <div class="flow-step">
           <div class="flow-num">5</div>
           <div class="flow-body">
-            <h3>電子印(社判・担当者印)を設定する</h3>
-            <p>社判・担当者印の画像を登録し、位置とサイズを調整します。</p>
+            <h3>法定福利費・注記を入力する</h3>
+            <p>必要に応じて法定福利費と注記(特記事項)を入力します。</p>
           </div>
         </div>
         <div class="flow-step">
           <div class="flow-num">6</div>
           <div class="flow-body">
-            <h3>添付ファイルを追加する</h3>
-            <p>必要であれば別紙(画像・PDF)を添付します。</p>
+            <h3>電子印・添付ファイルを設定する</h3>
+            <p>社判・担当者印の画像を登録します。必要であれば別紙(画像・PDF)を添付します。</p>
           </div>
         </div>
         <div class="flow-step">
           <div class="flow-num">7</div>
           <div class="flow-body">
             <h3>プレビューで確認する</h3>
-            <p><span class="op">「プレビュー」</span>を押すと印刷イメージが表示されます。電子印の位置はこの画面上でドラッグして微調整することもできます。</p>
+            <p><span class="op">「プレビュー」</span>で印刷イメージを確認します。電子印の位置は、プレビューの1部目の上でドラッグして調整できます。</p>
           </div>
         </div>
         <div class="flow-step">
           <div class="flow-num">8</div>
           <div class="flow-body">
-            <h3>ファイルに保存して社員へ送付する</h3>
-            <p><span class="op">「ファイルに保存」</span>でJSONファイルを書き出し、社内担当者へ送付します(詳細は各章を参照)。</p>
+            <h3>ファイルに保存して雄電社へ送付する</h3>
+            <p><span class="op">「ファイルに保存」</span>でJSONファイルを作成し、雄電社の担当者へ送付します(<a href="#send">11章</a>)。</p>
           </div>
         </div>
       </div>
     </section>
 
+    <section id="request">
+      <h2><span class="num">04</span>見積依頼書の取り込み</h2>
+      <p class="lede">見積のご依頼は、雄電社から<strong>見積作成依頼メール</strong>でお送りします。メールには「見積依頼書／注文書付属書」(本-購買-A0004)の<strong>JSONファイル</strong>が添付されています。労務が絡む見積の場合は、「工期設定チェックリスト」も一緒に添付されています。このJSONファイルを取り込むと工事情報が自動で入ります。見積依頼書は見積書と一緒に保存され、いつでも表示・印刷できます。</p>
+
+      <h3>取り込み方</h3>
+      <ol class="kbd-list">
+        <li>見積作成依頼メールに添付されたJSONファイルを、パソコンの任意のフォルダに保存します。</li>
+        <li>工事情報の<span class="op">「見積依頼書(JSON)を読込」</span>を押し、保存したJSONファイルを選びます。</li>
+        <li>1つのファイルに複数の業者の分が入っているときは、業者を選ぶ画面が出ます。<strong>自社の分</strong>の<span class="op">「この業者で取込」</span>を押してください(社名が一致する行には「自社名と一致」と表示されます)。取り込まれるのは自社の分だけです。</li>
+        <li><strong>工番・工事名・施工場所</strong>が自動で入ります。すでに入力してある値と違うときは、上書きするか確認が出ます。</li>
+        <li><strong>事業所</strong>は見積依頼書に含まれていないため、選択してください。</li>
+      </ol>
+
+      <h3>表示・印刷</h3>
+      <ul class="kbd-list">
+        <li><span class="op">「見積依頼書を表示・印刷」</span>で、見積依頼書(表面・裏面の約款)を確認できます。表示のみで、内容は変更できません。</li>
+        <li>表示画面の<span class="op">「印刷(表面・裏面)」</span>で、見積依頼書だけをA4縦2枚で印刷します。見積書の印刷には含まれません。</li>
+        <li>取り込みをやめるときは<span class="op">「取込を外す」</span>を押します(入力済みの工番・工事名・施工場所はそのまま残ります)。</li>
+      </ul>
+      <div class="note">
+        見積依頼書の注意書きのとおり、<strong>見積書提出時には見積依頼書を添付</strong>してください。見積依頼書を取り込んで「ファイルに保存」すれば、JSONファイルに見積依頼書も含まれ、雄電社側でも表示・印刷できます。
+      </div>
+    </section>
+
     <section id="fields">
-      <h2><span class="num">04</span>入力できる項目</h2>
+      <h2><span class="num">05</span>入力できる項目</h2>
       <p class="lede">工事情報から電子印まで、すべての項目をこのアプリで入力します。</p>
 
       <div class="table-wrap">
@@ -658,25 +687,30 @@
           <thead><tr><th>項目</th><th>内容</th></tr></thead>
           <tbody>
             <tr><td>事業所(本支店区分)</td><td>本店(100)/東関東支店(300)/横浜支店(200)/大阪支店(500)/名古屋支店(700)/仙台支店(600)/北関東支店(400)から選択</td></tr>
-            <tr><td>工番</td><td>例: 26-0000 / 26-0000A</td></tr>
+            <tr><td>工番</td><td>英数字12桁</td></tr>
             <tr><td>工事名・施工場所</td><td>自由入力</td></tr>
             <tr><td>工期(開始・終了)</td><td>日付選択</td></tr>
-            <tr><td>見積有効期限</td><td>見積日からの日数</td></tr>
           </tbody>
         </table>
       </div>
+      <p class="lede" style="font-size:13px;">工事情報は、見積依頼書(04章)のほか、<span class="op">「CSVから読込」</span>でも取り込めます。CSVの見出し行は「事業所,工番,工事名,施工場所,工期(開始),工期(終了)」です(<span class="op">「ひな形をダウンロード」</span>で見本を取得できます)。</p>
 
       <div class="table-wrap">
         <table>
           <caption>業者(自社)情報</caption>
           <thead><tr><th>項目</th><th>内容</th></tr></thead>
           <tbody>
-            <tr><td>業者見積日</td><td>日付選択(初期値は当日)</td></tr>
+            <tr><td>業者見積日</td><td>日付選択(初期値は当日)。<strong>工期(開始)を過ぎた日付は不可</strong>です(下記)</td></tr>
             <tr><td>業者見積番号</td><td>第◯号、の◯部分</td></tr>
             <tr><td>住所・社名・電話</td><td>自由入力</td></tr>
             <tr><td>業者コード</td><td>5桁以内</td></tr>
+            <tr><td>見積有効期限</td><td>見積日からの日数</td></tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="note caution">
+        <strong>業者見積日は工期(開始)より後にできません。</strong> 業者見積日が工期(開始)を過ぎていると、業者見積日の下に赤い警告が表示され、欄が赤枠になります。そのまま「プレビュー」「ファイルに保存」「社内回送用に保存」を押すと確認が出ます。業者見積日を見直してください(同じ日は可)。
       </div>
 
       <div class="table-wrap">
@@ -684,142 +718,165 @@
           <caption>明細・その他</caption>
           <thead><tr><th>項目</th><th>内容</th></tr></thead>
           <tbody>
-            <tr><td>明細内容</td><td>品名・仕様/数量/単位/単価/備考。金額は自動計算</td></tr>
+            <tr><td>明細内容</td><td>品名・仕様/数量/単位/単価/備考。金額は自動計算(06章)</td></tr>
             <tr><td>法定福利費</td><td>内訳・税抜見積総額に含まれる金額</td></tr>
-            <tr><td>註記</td><td>特記事項など。最大4行まで(5行目以降は自動的に削られます)</td></tr>
+            <tr><td>注記</td><td>特記事項など。最大5行まで(A4横(旧様式)は4行)。それ以上の行は自動的に削られます</td></tr>
           </tbody>
         </table>
       </div>
     </section>
 
     <section id="items">
-      <h2><span class="num">05</span>明細内容の入力</h2>
-      <p class="lede">「明細内容」の表に、品名・仕様、数量、単位、単価、備考を直接入力します。金額欄は数量×単価で自動的に計算され、入力の必要はありません。</p>
+      <h2><span class="num">06</span>明細内容と内訳ページ</h2>
+      <p class="lede">「明細内容」の表に、品名・仕様、数量、単位、単価、備考を直接入力します。金額欄は数量×単価で自動的に計算されます。</p>
       <ul class="kbd-list">
-        <li>入力できる行数は9行までです(行を追加するボタンは現在非表示になっており、使用できません)。</li>
-        <li>9行で収まらない場合は、品名欄に「別紙参照」と記載し、明細の詳細を別紙として添付ファイルに追加してください。</li>
-        <li>単価は小数点第2位まで、金額は最大9億9,999万9,999円まで入力できます。</li>
+        <li>1ページ目には<strong>15行</strong>まで入力できます。</li>
+        <li>入りきらないときは<span class="op">「＋ 内訳ページを追加」</span>を押すと、明細の表だけの<strong>内訳ページ(1枚37行)</strong>が増えます。何枚でも追加できます。</li>
+        <li>不要になった内訳ページは<span class="op">「最終ページを削除」</span>で減らせます(そのページに入力した明細も消えるため、確認が出ます)。</li>
+        <li>単価は円単位(小数点以下は四捨五入)で、999,999,999円まで入力できます。金額は10億円台まで表示できます。</li>
       </ul>
       <div class="note">
-        <strong>合計金額は自動計算されます。</strong> 入力した明細の金額を自動で合計し、見積書右上の数字枠(桁ごとのマス目)にも同時に反映されます。
+        <strong>合計金額は自動計算されます。</strong> 複数ページのときは、1ページ目と途中のページの最終行が「小計」、最後のページが「合計」になり、続くページには「－次葉に続く－」とページ番号が印刷されます。1ページ目の「見積総額」には全ページの合計が入ります。
       </div>
+      <p class="lede" style="font-size:13px;">A4横(旧様式)では明細は9行までで、内訳ページは使えません。</p>
     </section>
 
     <section id="stamp">
-      <h2><span class="num">06</span>電子印(社判・担当者印)の設定</h2>
-      <p class="lede">「業者(自社)情報」欄の下部で、社判1つと担当者印3つ(担当者印①②③)を個別に登録できます。画像はPNG(透過背景)推奨です。</p>
+      <h2><span class="num">07</span>電子印(社判・担当者印)の設定</h2>
+      <p class="lede">「業者(自社)情報」欄の下部で、社判1つと担当者印3つ(担当者印①②③)を登録できます。画像はPNG(透過背景)推奨です。初期位置は、社判が社名の横、担当者印①②③が「業者担当者印」の枠(右から①②③)です。</p>
 
       <div class="stamp-grid">
         <div class="stamp-setting is-primary">
           <p class="stamp-setting-label">🔴 社判</p>
           <div class="stamp-setting-row">
-            <span class="stamp-setting-field">X<span class="sv">1480</span></span>
-            <span class="stamp-setting-field">Y<span class="sv">300</span></span>
+            <span class="stamp-setting-field">X<span class="sv">1043</span></span>
+            <span class="stamp-setting-field">Y<span class="sv">288</span></span>
             <span class="stamp-setting-field">サイズ<span class="sv">110</span></span>
           </div>
         </div>
         <div class="stamp-setting">
           <p class="stamp-setting-label">担当者印①</p>
           <div class="stamp-setting-row">
-            <span class="stamp-setting-field">X<span class="sv">1480</span></span>
-            <span class="stamp-setting-field">Y<span class="sv">535</span></span>
+            <span class="stamp-setting-field">X<span class="sv">1100</span></span>
+            <span class="stamp-setting-field">Y<span class="sv">551</span></span>
             <span class="stamp-setting-field">サイズ<span class="sv">50</span></span>
           </div>
         </div>
         <div class="stamp-setting">
           <p class="stamp-setting-label">担当者印②</p>
           <div class="stamp-setting-row">
-            <span class="stamp-setting-field">X<span class="sv">1360</span></span>
-            <span class="stamp-setting-field">Y<span class="sv">535</span></span>
+            <span class="stamp-setting-field">X<span class="sv">1011</span></span>
+            <span class="stamp-setting-field">Y<span class="sv">551</span></span>
             <span class="stamp-setting-field">サイズ<span class="sv">50</span></span>
           </div>
         </div>
         <div class="stamp-setting">
           <p class="stamp-setting-label">担当者印③</p>
           <div class="stamp-setting-row">
-            <span class="stamp-setting-field">X<span class="sv">1240</span></span>
-            <span class="stamp-setting-field">Y<span class="sv">535</span></span>
+            <span class="stamp-setting-field">X<span class="sv">923</span></span>
+            <span class="stamp-setting-field">Y<span class="sv">551</span></span>
             <span class="stamp-setting-field">サイズ<span class="sv">50</span></span>
           </div>
         </div>
       </div>
-      <p class="lede" style="margin-top:-6px; font-size:12.5px;">数値は初期値です。X・Y・サイズは自由に変更できます。</p>
+      <p class="lede" style="margin-top:-6px; font-size:12.5px;">数値はA4縦の初期値です。X・Y・サイズは自由に変更できます。位置はA4縦とA4横(旧様式)で別々に記憶されます。</p>
 
       <h3>登録方法</h3>
       <ul class="kbd-list">
         <li>各欄の「画像」からPNGまたはJPGファイルを選択すると、その印影が見積書に反映されます。</li>
-        <li>位置は数値(X・Y)を直接入力するか、<span class="em-red">「プレビュー」で開いた印刷プレビューの1ページ目の上で印影をマウスでドラッグして移動できます</span>(ドラッグ中の位置は数値欄にも自動反映されます)。</li>
+        <li>位置は数値(X・Y)を直接入力するか、<span class="em-red">「プレビュー」で開いた印刷プレビューの1部目の上で印影をマウスでドラッグして移動できます</span>(ドラッグした位置は数値欄にも反映されます)。</li>
         <li>サイズは20〜400の範囲で数値入力します。</li>
         <li>不要になった印影は各欄の「削除」ボタンで消去できます。</li>
       </ul>
       <div class="note">
-        <strong>「新規作成」を押しても電子印は消えません。</strong> 住所・社名・電話・業者コードと同様、電子印は自社情報として維持され、次の見積書でもそのまま使えます。
+        <strong>「新規作成」を押しても電子印は消えません。</strong> 住所・社名・電話・業者コードと同様、電子印は自社情報として残り、次の見積書でもそのまま使えます。
       </div>
     </section>
 
     <section id="attachments">
-      <h2><span class="num">07</span>添付ファイルの追加</h2>
+      <h2><span class="num">08</span>添付ファイルの追加</h2>
       <p class="lede">「添付ファイル(別紙)」欄で、画像とPDFを追加できます。ボタンは画像用とPDF用に分かれています。</p>
       <ul class="kbd-list">
-        <li><span class="op">「画像を添付」</span>: 複数枚まとめて選択できます。縦向きの画像は自動的に横向き(A4横相当)に回転して印刷に出力されます。</li>
-        <li><span class="op">「PDFを添付」</span>: 複数ファイルをまとめて選択できます。PDFは見積書本体の印刷には含まれないため、一覧の「開く」ボタンで別ウィンドウ表示して内容を確認してください。</li>
+        <li><span class="op">「画像を添付」</span>: 複数枚まとめて選択できます。</li>
+        <li><span class="op">「PDFを添付」</span>: 複数ファイルをまとめて選択できます。PDFは全ページが印刷に含まれます。</li>
+        <li>画像・PDFとも、見積書のあとに別紙として印刷されます(用紙に合わせて自動で向きを回転します)。一覧の「開く」ボタンで別ウィンドウに表示することもできます。</li>
         <li>追加した添付ファイルは一覧の「削除」ボタンでいつでも取り消せます。</li>
       </ul>
     </section>
 
+    <section id="print">
+      <h2><span class="num">09</span>プレビュー・印刷</h2>
+      <p class="lede"><span class="op">「プレビュー」</span>を押すと印刷イメージが表示されます。<span class="op">「印刷実行」</span>でブラウザの印刷画面が開きます。</p>
+      <ul class="kbd-list">
+        <li>見積書は<strong>2部(青・赤)</strong>印刷されます。1部目(青)の全ページ → 2部目(赤)の全ページ → 添付ファイル、の順です。</li>
+        <li>用紙はA4縦です(A4横(旧様式)を選んでいるときはA4横)。印刷画面の用紙サイズはA4、倍率は100%(実際のサイズ)にしてください。</li>
+        <li>PDFで保存する場合は、印刷画面の送信先で「PDFに保存」を選びます。</li>
+      </ul>
+    </section>
+
     <section id="save">
-      <h2><span class="num">08</span>保存する</h2>
-      <p class="lede">保存には2種類あります。用途に応じて使い分けてください。</p>
+      <h2><span class="num">10</span>保存する</h2>
+      <p class="lede">保存には3種類あります。用途に応じて使い分けてください。</p>
 
       <div class="table-wrap">
         <table>
           <thead><tr><th>ボタン</th><th>保存先</th><th>用途</th></tr></thead>
           <tbody>
             <tr><td><span class="op">保存</span></td><td>このブラウザの中(下書き)</td><td>作業の一時保存。次にアプリを開いたときに自動で内容が復元されます。他の人には渡せません。</td></tr>
-            <tr><td><span class="op">ファイルに保存</span></td><td>任意のフォルダ(.jsonファイル)</td><td>社員へ送付するためのファイルを作成します。ファイル名は「工番_見積書_日付_業者見積番号_社名.json」の形式で自動的に提案されます。</td></tr>
+            <tr><td><span class="op">ファイルに保存</span></td><td>任意のフォルダ(.jsonファイル)</td><td>雄電社へ送付するためのファイルを作成します。ファイル名は「工番_見積書_日付_業者見積番号_社名.json」の形式で自動的に提案されます。保存したファイルは<span class="op">「ファイルを開く」</span>で読み込み直せます。</td></tr>
+            <tr><td><span class="op">社内回送用に保存(HTML)</span></td><td>任意のフォルダ(.htmlファイル)</td><td>入力内容を含んだアプリのコピーを1つのHTMLファイルとして保存します。受け取った人はアプリがなくても、ブラウザで開くだけで内容を確認・印刷できます。社内での確認・回覧用です。</td></tr>
           </tbody>
         </table>
       </div>
 
       <div class="note">
-        <strong>入力するたびに自動でブラウザ内に保存されます。</strong> 「保存」ボタンを押さなくても、フォームに入力するたびに下書きが自動更新されます。ただし、これはこのブラウザ・この端末だけに保存される一時的なものです。社員へ渡すファイルは必ず<strong>「ファイルに保存」</strong>で作成してください。
+        <strong>入力するたびに自動でブラウザ内に保存されます。</strong> 「保存」ボタンを押さなくても下書きは自動で更新されます。ただし、このブラウザ・この端末だけに保存される一時的なものです。雄電社へ渡すファイルは必ず<strong>「ファイルに保存」</strong>で作成してください。
       </div>
     </section>
 
     <section id="send">
-      <h2><span class="num">09</span>社員への送付</h2>
+      <h2><span class="num">11</span>雄電社への送付</h2>
       <p class="lede">「ファイルに保存」で作成したJSONファイルの送り方は、電子印の有無によって異なります。アプリからの自動送信機能はないため、いずれも手動での対応になります。</p>
       <ul class="kbd-list">
-        <li><strong>電子印が押印されている場合</strong> — 保存した「.json」ファイルを、社内担当者宛のメールに添付して送ってください。</li>
+        <li><strong>電子印が押印されている場合</strong> — 保存した「.json」ファイルを、雄電社の担当者宛のメールに添付して送ってください。</li>
         <li><strong>電子印がない場合</strong> — <span class="op">「プレビュー」</span>→<span class="op">「印刷実行」</span>で紙に印刷し、押印のうえ郵送してください。</li>
       </ul>
     </section>
 
     <section id="faq">
-      <h2><span class="num">10</span>注意事項・Q&amp;A</h2>
+      <h2><span class="num">12</span>注意事項・Q&amp;A</h2>
       <dl class="faq">
         <dt>ブラウザを閉じても大丈夫ですか?</dt>
-        <dd>入力内容は自動的にこのブラウザ内へ保存されるため、同じ端末・同じブラウザで再度開けば続きから入力できます。ただし別の端末やブラウザには引き継がれないため、社員へ送付する前提のデータは必ず「ファイルに保存」でファイル化してバックアップしてください。</dd>
+        <dd>入力内容は自動的にこのブラウザ内へ保存されるため、同じ端末・同じブラウザで再度開けば続きから入力できます。ただし別の端末やブラウザには引き継がれないため、送付するデータは必ず「ファイルに保存」でファイル化してください。</dd>
 
         <dt>「新規作成」を押すと何が消えますか?</dt>
-        <dd>工事情報・明細内容・法定福利費・註記・添付ファイルなど、案件ごとに異なる項目はすべて消去されます。住所・社名・電話・業者コード・電子印(社判/担当者印)は自社の固定情報として維持されます。</dd>
+        <dd>工事情報・明細内容・内訳ページ・法定福利費・注記・添付ファイル・取り込んだ見積依頼書など、案件ごとに異なる項目は消去されます。住所・社名・電話・業者コード・電子印(社判/担当者印)は自社の固定情報として残ります。</dd>
 
-        <dt>「ファイルに保存」を押しても何も起きません。</dt>
-        <dd>ご利用のブラウザによっては、保存先を選ぶ画面ではなく、ファイル名を確認するポップアップが表示され、そのままダウンロードフォルダに保存される場合があります。Google ChromeまたはMicrosoft Edgeでの利用を推奨します。</dd>
+        <dt>明細が15行に収まりません。</dt>
+        <dd>「＋ 内訳ページを追加」で内訳ページ(1枚37行)を追加してください。別紙(画像・PDF)を添付する方法も使えます。</dd>
 
-        <dt>明細が9行に収まりません。</dt>
-        <dd>品名欄に「別紙参照」と記載し、明細の詳細を記載した別紙(画像またはPDF)を添付ファイルとして追加してください。</dd>
+        <dt>見積依頼書を読み込むと「ファイルではありません」と表示されます。</dt>
+        <dd>読み込めるのは、雄電社から受け取った見積依頼書(本-購買-A0004)のJSONファイルだけです。見積書のJSONファイルは「ファイルを開く」で読み込んでください。</dd>
+
+        <dt>業者見積日に赤い警告が出ます。</dt>
+        <dd>業者見積日が工期(開始)を過ぎています。工期(開始)を過ぎた業者見積日は不可のため、日付を見直してください。</dd>
+
+        <dt>「ファイルに保存」を押しても保存先を選ぶ画面が出ません。</dt>
+        <dd>ご利用のブラウザによっては、ファイル名を確認する画面が表示され、そのままダウンロードフォルダに保存されます。Google ChromeまたはMicrosoft Edgeでの利用を推奨します。</dd>
 
         <dt>電子印の画像はどんな形式がよいですか?</dt>
         <dd>背景が透過されたPNG形式を推奨します。JPGでも登録できますが、背景が白いまま印影の外側まで四角く表示されます。</dd>
 
-        <dt>印刷すると2ページ出力されるのはなぜですか?</dt>
-        <dd>仕様により、色違いの2種類のページ(青/赤)が自動的に1ページ目・2ページ目として出力されます。誤って印刷されたわけではありません。</dd>
+        <dt>同じ見積書が2部(青と赤)印刷されるのはなぜですか?</dt>
+        <dd>仕様により、色違いの2部(青/赤)が続けて出力されます。誤って印刷されたわけではありません。</dd>
+
+        <dt>以前のA4横の見積書で作りたい。</dt>
+        <dd>ツールバーの「帳票の向き」で「A4横(旧様式)」を選んでください。明細は9行まで、注記は4行までになります。</dd>
       </dl>
     </section>
 
     <footer>
-      見積書入力アプリ(雄電社様式・業者用)操作マニュアル
+      雄電社指定見積書(業者用)操作マニュアル　2026年11月版(v1)
     </footer>
   </main>
 </div>
