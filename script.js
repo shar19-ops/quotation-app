@@ -115,10 +115,10 @@ const PORTRAIT_COORDS = {
   periodRights: [P(51), P(59.5), P(68), P(86.5), P(95), P(103.5)], // 年・月・日 ～ 年・月・日 の手前
   validDaysY: textTopAt(106.4), validDaysRight: P(71),
 
-  // 業者情報(住所・社名・電話は 123mm から右端まで。長い場合は横方向に縮小)
+  // 業者情報(住所・社名・電話は 123mm から右端まで。長い場合は横方向に縮小)。2026-11-18 全体を3mm下げた(帳票の生成スクリプトと同じ)
   vendorX: P(123), vendorWidth: P(198 - 123 - 1),
-  vendorAddressY: textTopAt(46), vendorNameY: textTopAt(55), vendorTelY: textTopAt(64),
-  vendorCodeCenter: P((157 + 198) / 2), vendorCodeWidth: P(38), vendorCodeY: textTopAt(80),
+  vendorAddressY: textTopAt(49), vendorNameY: textTopAt(58), vendorTelY: textTopAt(67),
+  vendorCodeCenter: P((157 + 198) / 2), vendorCodeWidth: P(38), vendorCodeY: textTopAt(83),
 
   // 複数ページのとき: ページ番号(右上)、「－次葉に続く－」(押印枠の右)
   pageNoRight: P(198), pageNoY: textTopAt(17),
@@ -202,10 +202,10 @@ const LAYOUTS = {
     // 担当者印①②③は業者担当者印の3マス(右から①②③、中心 x 190.5/175.5/160.5mm・y 97.5mm、サイズ50px)、
     // 社判(サイズ110px)は社名の行の右端寄り(中心 186mm, 58mm。住所に掛からない位置)
     stampDefaults: {
-      stampX4: Math.round(P(186) - 55), stampY4: Math.round(P(58) - 55),
-      stampX: Math.round(P(190.5) - 25), stampY: Math.round(P(97.5) - 25),
-      stampX2: Math.round(P(175.5) - 25), stampY2: Math.round(P(97.5) - 25),
-      stampX3: Math.round(P(160.5) - 25), stampY3: Math.round(P(97.5) - 25)
+      stampX4: Math.round(P(186) - 55), stampY4: Math.round(P(61) - 55),
+      stampX: Math.round(P(190.5) - 25), stampY: Math.round(P(100.5) - 25),
+      stampX2: Math.round(P(175.5) - 25), stampY2: Math.round(P(100.5) - 25),
+      stampX3: Math.round(P(160.5) - 25), stampY3: Math.round(P(100.5) - 25)
     }
   }
 };
@@ -505,14 +505,25 @@ function bgSrc(color) {
 
 // ===== 業者見積日のチェック: 工期(開始)を過ぎた業者見積日は不可(社内ルール) =====
 // 入力欄の下に警告を出し、日付を変えたときと、プレビュー・保存の前に確認する(止めはしない)
+// 2026-11-18 ルール変更(ユーザー指定): 見積依頼書に見積提出期限(A0004 の「見積提出日」)があれば、業者見積日はその日以内。
+// 見積提出期限が空欄(または見積依頼書なし)なら、従来どおり工期(開始)以内(同じ日は可)。
+function quoteDeadline() {
+  const d = a0004 && a0004.values ? String(a0004.values.teishutsu || "") : "";
+  return /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : "";
+}
+
 function quoteDateProblem() {
   const quote = getField("vendorQuoteDate");
-  const start = getField("periodStart");
-  if (!quote || !start || quote <= start) return "";
-  // 日付欄に年を1桁ずつ入力している途中(0002年など)は判定しない
-  if (quote < "1900" || start < "1900") return "";
+  if (!quote || quote < "1900") return ""; // 日付欄に年を1桁ずつ入力している途中(0002年など)は判定しない
   const fmt = (iso) => iso.replace(/-/g, "/");
-  return `業者見積日(${fmt(quote)})が工期(開始)(${fmt(start)})を過ぎています。工期(開始)を過ぎた業者見積日は不可です。`;
+  const deadline = quoteDeadline();
+  if (deadline) {
+    if (quote <= deadline) return "";
+    return `業者見積日(${fmt(quote)})が見積依頼書の見積提出期限(${fmt(deadline)})を過ぎています。業者見積日は見積提出期限以内にしてください。`;
+  }
+  const start = getField("periodStart");
+  if (!start || start < "1900" || quote <= start) return "";
+  return `業者見積日(${fmt(quote)})が工期(開始)(${fmt(start)})を過ぎています。業者見積日は工期(開始)前にしてください。`;
 }
 
 function renderQuoteDateWarning() {
@@ -522,7 +533,8 @@ function renderQuoteDateWarning() {
     el.textContent = msg ? "⚠ " + msg : "";
     el.style.display = msg ? "block" : "none";
   }
-  ["vendorQuoteDate", "periodStart"].forEach(id => document.getElementById(id).classList.toggle("input-warn", !!msg));
+  document.getElementById("vendorQuoteDate").classList.toggle("input-warn", !!msg);
+  document.getElementById("periodStart").classList.toggle("input-warn", !!msg && !quoteDeadline()); // 見積提出期限で判定しているときは工期の欄は赤くしない
 }
 
 function confirmQuoteDate(action) {
@@ -695,7 +707,7 @@ function buildOverlay(layer, data, enableStampDrag) {
     addOverlayMaybeFit(layer, C.vendorAddress.x, C.vendorTextWidth, C.vendorAddress.y, data.vendorAddress);
     addOverlayMaybeFit(layer, C.vendorName.x, C.vendorTextWidth, C.vendorName.y, data.vendorName);
     addOverlayMaybeFit(layer, C.vendorTel.x, C.vendorTextWidth, C.vendorTel.y, data.vendorTel);
-    addOverlayCenter(layer, C.vendorCodeCenter, C.vendorCodeWidth, C.vendorCode.y, data.vendorCode);
+    addOverlayFit(layer, C.vendorCodeCenter, C.vendorCodeWidth, C.vendorCode.y, data.vendorCode); // 業者コード10桁(入りきらなければ縮小)
   }
 
   [
@@ -1622,7 +1634,10 @@ function applyA0004(parsed, n, fileName) {
   const v = next.values;
   if (a0004 && !confirm("取り込み済みの見積依頼書を、このファイルの内容に置き換えますか?")) return;
   // 工事情報: 入力済みで違う値のときは確認してから上書き
-  const map = [["projectNo", "工番", v.koban], ["projectName", "工事名", v.kojiName], ["siteLocation", "施工場所", v.basho]];
+  // 工期は見積依頼書の「見積書工期」を取り込む(工事命令書工期は使わない。ユーザー指定)
+  const isoDate = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(String(s || "")) ? String(s) : "");
+  const map = [["projectNo", "工番", v.koban], ["projectName", "工事名", v.kojiName], ["siteLocation", "施工場所", v.basho],
+    ["periodStart", "工期(開始)", isoDate(v.mitsuKoki)], ["periodEnd", "工期(終了)", isoDate(v.mitsuKokiTo)]];
   const diffs = map.filter(([id, , val]) => val && getField(id) && getField(id) !== String(val));
   let overwrite = true;
   if (diffs.length) {
@@ -1654,6 +1669,7 @@ function removeA0004() {
   if (!confirm("取り込んだ見積依頼書を外しますか?(工番・工事名・施工場所の入力はそのまま残ります)")) return;
   a0004 = null;
   renderA0004Status();
+  renderQuoteDateWarning(); // 見積提出期限のチェックが外れるので表示し直す
   saveDraft();
 }
 
