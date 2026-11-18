@@ -1622,7 +1622,10 @@ function applyA0004(parsed, n, fileName) {
   const v = next.values;
   if (a0004 && !confirm("取り込み済みの見積依頼書を、このファイルの内容に置き換えますか?")) return;
   // 工事情報: 入力済みで違う値のときは確認してから上書き
-  const map = [["projectNo", "工番", v.koban], ["projectName", "工事名", v.kojiName], ["siteLocation", "施工場所", v.basho]];
+  // 工期は見積依頼書の「見積書工期」を取り込む(工事命令書工期は使わない。ユーザー指定)
+  const isoDate = (s) => (/^\d{4}-\d{2}-\d{2}$/.test(String(s || "")) ? String(s) : "");
+  const map = [["projectNo", "工番", v.koban], ["projectName", "工事名", v.kojiName], ["siteLocation", "施工場所", v.basho],
+    ["periodStart", "工期(開始)", isoDate(v.mitsuKoki)], ["periodEnd", "工期(終了)", isoDate(v.mitsuKokiTo)]];
   const diffs = map.filter(([id, , val]) => val && getField(id) && getField(id) !== String(val));
   let overwrite = true;
   if (diffs.length) {
