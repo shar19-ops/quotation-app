@@ -1047,7 +1047,7 @@ table.a4f-b4 .a4f-kensa .a4f-kv.a4f-date { text-align: right; }
         <label>社名 <input type="text" id="vendorName"></label>
         <div class="two-col">
           <label>電話 <input type="text" id="vendorTel"></label>
-          <label>業者コード <input type="text" id="vendorCode" maxlength="5"></label>
+          <label>業者コード <input type="text" id="vendorCode" maxlength="10" placeholder="10桁"></label>
         </div>
         <label>見積有効期限(見積日より) <input type="number" id="validDays" min="0" placeholder="日間"></label>
         <div class="stamp-section">
@@ -2251,7 +2251,7 @@ function buildOverlay(layer, data, enableStampDrag) {
     addOverlayMaybeFit(layer, C.vendorAddress.x, C.vendorTextWidth, C.vendorAddress.y, data.vendorAddress);
     addOverlayMaybeFit(layer, C.vendorName.x, C.vendorTextWidth, C.vendorName.y, data.vendorName);
     addOverlayMaybeFit(layer, C.vendorTel.x, C.vendorTextWidth, C.vendorTel.y, data.vendorTel);
-    addOverlayCenter(layer, C.vendorCodeCenter, C.vendorCodeWidth, C.vendorCode.y, data.vendorCode);
+    addOverlayFit(layer, C.vendorCodeCenter, C.vendorCodeWidth, C.vendorCode.y, data.vendorCode); // 業者コード10桁(入りきらなければ縮小)
   }
 
   [

@@ -1037,7 +1037,7 @@ table.a4f-b4 .a4f-kensa .a4f-kv.a4f-date { text-align: right; }
         <label>社名 <input type="text" id="vendorName" disabled></label>
         <div class="two-col">
           <label>電話 <input type="text" id="vendorTel" disabled></label>
-          <label>業者コード <input type="text" id="vendorCode" maxlength="5" disabled></label>
+          <label>業者コード <input type="text" id="vendorCode" maxlength="10" placeholder="10桁" disabled></label>
         </div>
         <label>見積有効期限(見積日より) <input type="number" id="validDays" min="0" placeholder="日間" disabled></label>
         <p class="form-hint">電子印(社判・担当者印)は業者側で設定された内容がそのまま印刷に反映されます。</p>
@@ -2394,7 +2394,7 @@ function buildOverlay(layer, data) {
     addOverlayMaybeFit(layer, C.vendorAddress.x, C.vendorTextWidth, C.vendorAddress.y, data.vendorAddress);
     addOverlayMaybeFit(layer, C.vendorName.x, C.vendorTextWidth, C.vendorName.y, data.vendorName);
     addOverlayMaybeFit(layer, C.vendorTel.x, C.vendorTextWidth, C.vendorTel.y, data.vendorTel);
-    addOverlayCenter(layer, C.vendorCodeCenter, C.vendorCodeWidth, C.vendorCode.y, data.vendorCode);
+    addOverlayFit(layer, C.vendorCodeCenter, C.vendorCodeWidth, C.vendorCode.y, data.vendorCode); // 業者コード10桁(入りきらなければ縮小)
   }
 
   [
