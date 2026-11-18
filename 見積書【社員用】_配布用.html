@@ -1968,6 +1968,13 @@ function amountFmt(n) {
   return minusMark(Math.round(n), v => String(v));
 }
 
+// 数量: マイナスは「▲」で表記(例: ▲3)。プラスは入力したとおり
+function qtyFmt(q) {
+  if (q === "" || q == null) return "";
+  const n = Number(q);
+  return !isNaN(n) && n < 0 ? "▲" + String(-n) : q;
+}
+
 // 明細内容は閲覧専用(disabled入力)で描画する
 function renderItemsInput() {
   const body = document.getElementById("itemsInputBody");
@@ -2305,7 +2312,7 @@ function syncContPages(container, anchor, set, color, data, withLabels) {
 // 明細1行分の印字(1ページ目・内訳ページ共通)
 function addItemRowOverlay(layer, IL, rowY, item, amount) {
   addOverlayMaybeFit(layer, IL.cols.name, IL.cols.nameWidth, rowY, item.name);
-  addOverlayRight(layer, IL.cols.qtyRight, IL.cols.qtyWidth, rowY, item.qty);
+  addOverlayRight(layer, IL.cols.qtyRight, IL.cols.qtyWidth, rowY, qtyFmt(item.qty));
   addOverlayCenter(layer, IL.cols.unitCenter, IL.cols.unitWidth, rowY, item.unit);
   if (IL.plainNumbers) {
     // 縦の帳票: 単価は円単位(銭は四捨五入)、単価・金額ともカンマ付きで右寄せ
