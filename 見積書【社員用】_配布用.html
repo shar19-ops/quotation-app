@@ -131,29 +131,35 @@ body {
   margin-bottom: 0;
 }
 
+/* 入力欄の区切りがわかるよう、枠(グレー地) → 入力欄(白・濃い枠線) の明暗を付ける(請求書アプリと同じ配色。2026-11-21) */
 fieldset {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #94a3b8;
   border-radius: 6px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  padding: 12px 14px 4px;
+  background: #eef2f7;
 }
 
 legend {
   font-weight: bold;
-  color: #374151;
-  padding: 0 6px;
+  color: #fff;
+  background: #334155;
+  padding: 3px 12px;
+  border-radius: 4px;
 }
 
 .form-panel label {
   display: block;
   font-size: 14px;
-  margin-bottom: 10px;
-  color: #374151;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: #1f2937;
 }
 
 .form-hint {
   margin: -4px 0 10px 0;
   font-size: 12px;
-  color: #6b7280;
+  color: #475569;
 }
 
 .form-hint-spaced {
@@ -167,9 +173,45 @@ legend {
   width: 100%;
   margin-top: 4px;
   padding: 8px 10px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #64748b;
   border-radius: 4px;
   font-size: 14px;
+  font-weight: normal;
+  color: #111827;
+  background: #fff;
+}
+
+.form-panel input:hover,
+.form-panel select:hover,
+.form-panel textarea:hover {
+  border-color: #334155;
+}
+
+/* 入力中の欄は青い枠と薄い青地で強調する */
+.form-panel input:focus,
+.form-panel select:focus,
+.form-panel textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+  background: #f8fbff;
+}
+
+.form-panel input::placeholder,
+.form-panel textarea::placeholder {
+  color: #94a3b8;
+}
+
+.form-panel input[type="file"] {
+  padding: 6px;
+}
+
+/* 自動計算・自動入力の欄(入力できない)は、入力欄(白)と区別できるよう灰色地・点線枠にする */
+.form-panel input[readonly] {
+  background: #dfe5ec;
+  color: #475569;
+  border-style: dashed;
+  border-color: #94a3b8;
 }
 
 .two-col {
@@ -190,8 +232,9 @@ legend {
 
 .items-input-table th {
   text-align: left;
-  font-size: 11px;
-  color: #6b7280;
+  font-size: 12px;
+  font-weight: bold;
+  color: #334155;
   padding: 2px 5px;
 }
 
@@ -204,7 +247,8 @@ legend {
   box-sizing: border-box;
   padding: 5px 6px;
   font-size: 13px;
-  border: 1px solid #d1d5db;
+  line-height: 16px; /* 金額の欄(.item-amount)と高さをそろえる */
+  border: 1px solid #64748b;
   border-radius: 3px;
 }
 
@@ -215,17 +259,23 @@ legend {
 .items-input-table .col-amount { width: 10%; }
 .items-input-table .col-remarks { width: 9%; }
 
+/* 金額(自動計算)は、自動計算の欄と同じ灰色地・点線枠。高さは入力欄にそろえる */
 .items-input-table .item-amount {
   display: block;
   text-align: right;
   padding: 5px 6px;
   font-size: 13px;
-  color: #374151;
+  line-height: 16px;
+  min-height: 28px; /* 16px + 上下の余白10px + 枠2px(入力欄と同じ高さ。空欄でもつぶれない) */
+  color: #475569;
+  background: #dfe5ec;
+  border: 1px dashed #94a3b8;
+  border-radius: 3px;
 }
 
 .items-input-table tr.total-row td {
   font-weight: bold;
-  border-top: 2px solid #9ca3af;
+  border-top: 2px solid #64748b;
 }
 
 .items-input-table .total-label {
@@ -336,7 +386,7 @@ legend {
 
 .stamp-section {
   flex: 1;
-  border: 1px dashed #d1d5db;
+  border: 1px dashed #94a3b8;
   border-radius: 4px;
   padding: 8px 10px 4px;
   margin-bottom: 0;
@@ -346,7 +396,7 @@ legend {
   margin: 0 0 6px 0;
   font-size: 12px;
   font-weight: bold;
-  color: #6b7280;
+  color: #334155;
 }
 
 .ov-stamp {
@@ -656,11 +706,14 @@ legend {
   margin-left: 6px;
 }
 
+/* 閲覧のみの欄は、自動計算の欄と同じ灰色地・点線枠(入力できる欄の白と区別する) */
 .employee-app input:disabled,
 .employee-app select:disabled,
 .employee-app textarea:disabled {
-  background: #f3f4f6;
-  color: #111827;
+  background: #dfe5ec;
+  color: #334155;
+  border-style: dashed;
+  border-color: #94a3b8;
   opacity: 1;
   cursor: not-allowed;
 }
@@ -782,8 +835,8 @@ legend {
 
 /* 明細入力表のページの区切り行 */
 .items-input-table tr.page-sep td {
-  background: #e5e7eb;
-  color: #374151;
+  background: #cbd5e1;
+  color: #1f2937;
   font-size: 12px;
   font-weight: bold;
   padding: 3px 8px;
@@ -846,7 +899,7 @@ input.input-warn {
   font-size: 12px;
   color: #374151;
 }
-.a0004-status.empty { color: #9ca3af; }
+.a0004-status.empty { color: #64748b; }
 .a0004-modal-inner { width: fit-content; }
 .a0004-view {
   display: flex;
