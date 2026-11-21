@@ -6,7 +6,7 @@ const BG_RED_SRC  = () => document.getElementById("bgRedSrc").src;
 
 const fieldIds = [
   "branchType", "projectNo", "projectName", "siteLocation", "periodStart", "periodEnd", "validDays",
-  "vendorQuoteDate", "vendorQuoteNo", "vendorAddress", "vendorName", "vendorTel", "vendorCode",
+  "vendorQuoteDate", "vendorQuoteNo", "vendorAddress", "vendorName", "vendorTel", "vendorCode", "vendorNameFont", "vendorNameSize",
   "welfareCost", "notes", "themeColor",
   "stampX",  "stampY",  "stampSize",
   "stampX2", "stampY2", "stampSize2",
@@ -430,11 +430,23 @@ function addOverlayCenter(layer, centerXPx, widthPx, yPx, text, extraClass) {
 
 // .ov と同じフォントで文字列の幅を測り、150dpi基準pxで返す
 let measureCtx = null;
-function measureOverlayTextPx(text) {
+const OV_FONT = '"MS Gothic", "Yu Gothic", "Hiragino Sans", sans-serif'; // style.css の .ov と同じ
+const OV_FONT_MM = 4.11; // style.css の .ov の font-size
+function measureOverlayTextPx(text, fontFamily, fontMm) {
   if (!measureCtx) measureCtx = document.createElement("canvas").getContext("2d");
-  const fontPx = 4.11 * 96 / 25.4; // style.css の .ov font-size(4.11mm)をCSS pxに換算
-  measureCtx.font = `${fontPx}px "MS Gothic", "Yu Gothic", "Hiragino Sans", sans-serif`;
+  const fontPx = (fontMm || OV_FONT_MM) * 96 / 25.4; // mm をCSS pxに換算
+  measureCtx.font = `${fontPx}px ${fontFamily || OV_FONT}`;
   return measureCtx.measureText(text).width * 150 / 96;
+}
+
+// 業者の住所・社名の書体と社名の文字の大きさ(請求書アプリと同じ機能。2026-11-22)
+//   書体は住所・社名に、大きさ(mm)は社名だけに使う。空欄なら標準(MSゴシック・4.11mm)
+function vendorTextOpts(data, withSize) {
+  const opts = {};
+  if (data.vendorNameFont) opts.font = data.vendorNameFont;
+  const size = Number(data.vendorNameSize);
+  if (withSize && size >= 2 && size <= 10) opts.sizeMm = size;
+  return opts;
 }
 
 // 中心(centerXPx)を基準に中央寄せで配置し、widthPxを超える場合は横方向に縮小して収める
@@ -455,11 +467,18 @@ function addOverlayFit(layer, centerXPx, widthPx, yPx, text, extraClass) {
 }
 
 // 左端(xPx)から配置し、widthPxを超える場合は横方向に縮小して収める(縦の帳票の品名・備考・業者情報用)
-function addOverlayFitLeft(layer, xPx, widthPx, yPx, text, extraClass) {
+// opts: { font: 書体, sizeMm: 文字の大きさ(mm) }。大きさを変えても行の中心の高さは標準の文字と同じにする
+function addOverlayFitLeft(layer, xPx, widthPx, yPx, text, extraClass, opts) {
   if (text === "" || text === undefined || text === null) return;
   const span = document.createElement("span");
   span.className = "ov" + (extraClass ? " " + extraClass : "");
-  const textW = measureOverlayTextPx(String(text));
+  const o = opts || {};
+  const textW = measureOverlayTextPx(String(text), o.font, o.sizeMm);
+  if (o.font) span.style.fontFamily = o.font;
+  if (o.sizeMm) {
+    span.style.fontSize = o.sizeMm + "mm";
+    yPx += (OV_FONT_MM - o.sizeMm) / 2 / PX2MM;
+  }
   span.style.left = mm(xPx) + "mm";
   span.style.top = mm(yPx) + "mm";
   if (textW > widthPx) {
@@ -488,8 +507,8 @@ function addOverlayFitRight(layer, rightXPx, widthPx, yPx, text, extraClass) {
 }
 
 // widthPx が指定されていれば縮小して収め、無ければ従来どおり置くだけ(横の帳票は従来の見た目を維持)
-function addOverlayMaybeFit(layer, xPx, widthPx, yPx, text, extraClass) {
-  if (widthPx) addOverlayFitLeft(layer, xPx, widthPx, yPx, text, extraClass);
+function addOverlayMaybeFit(layer, xPx, widthPx, yPx, text, extraClass, opts) {
+  if (widthPx || opts) addOverlayFitLeft(layer, xPx, widthPx || Infinity, yPx, text, extraClass, opts);
   else addOverlay(layer, xPx, yPx, text, extraClass);
 }
 
@@ -573,7 +592,7 @@ function buildContOverlay(layer, data, page) {
   const CT = PORTRAIT_CONT;
   const IL = CT.items;
   addOverlayFitLeft(layer, CT.projectX, CT.projectWidth, CT.headerY, data.projectName);
-  addOverlayFitLeft(layer, CT.vendorX, CT.vendorWidth, CT.headerY, data.vendorName);
+  addOverlayFitLeft(layer, CT.vendorX, CT.vendorWidth, CT.headerY, data.vendorName, undefined, vendorTextOpts(data, false));
 
   const start = layout().rows + (page - 2) * CONT_ROWS;
   let pageSubtotal = 0;
@@ -661,8 +680,8 @@ function buildPortraitHeader(layer, data, C) {
   [ps.y, ps.m, ps.d, pe.y, pe.m, pe.d].forEach((v, i) => addOverlayRight(layer, C.periodRights[i], P(14), C.periodY, v));
   addOverlayRight(layer, C.validDaysRight, P(14), C.validDaysY, data.validDays);
 
-  addOverlayFitLeft(layer, C.vendorX, C.vendorWidth, C.vendorAddressY, data.vendorAddress);
-  addOverlayFitLeft(layer, C.vendorX, C.vendorWidth, C.vendorNameY, data.vendorName);
+  addOverlayFitLeft(layer, C.vendorX, C.vendorWidth, C.vendorAddressY, data.vendorAddress, undefined, vendorTextOpts(data, false));
+  addOverlayFitLeft(layer, C.vendorX, C.vendorWidth, C.vendorNameY, data.vendorName, undefined, vendorTextOpts(data, true));
   addOverlayFitLeft(layer, C.vendorX, C.vendorWidth, C.vendorTelY, data.vendorTel);
   addOverlayFit(layer, C.vendorCodeCenter, C.vendorCodeWidth, C.vendorCodeY, data.vendorCode);
 
@@ -704,8 +723,8 @@ function buildOverlay(layer, data, enableStampDrag) {
 
     addOverlay(layer, C.validDays.x, C.validDays.y, data.validDays);
 
-    addOverlayMaybeFit(layer, C.vendorAddress.x, C.vendorTextWidth, C.vendorAddress.y, data.vendorAddress);
-    addOverlayMaybeFit(layer, C.vendorName.x, C.vendorTextWidth, C.vendorName.y, data.vendorName);
+    addOverlayMaybeFit(layer, C.vendorAddress.x, C.vendorTextWidth, C.vendorAddress.y, data.vendorAddress, undefined, vendorTextOpts(data, false));
+    addOverlayMaybeFit(layer, C.vendorName.x, C.vendorTextWidth, C.vendorName.y, data.vendorName, undefined, vendorTextOpts(data, true));
     addOverlayMaybeFit(layer, C.vendorTel.x, C.vendorTextWidth, C.vendorTel.y, data.vendorTel);
     addOverlayFit(layer, C.vendorCodeCenter, C.vendorCodeWidth, C.vendorCode.y, data.vendorCode); // 業者コード10桁(入りきらなければ縮小)
   }
@@ -1332,7 +1351,7 @@ function onStampDragStart(e, dragLayer, xField, yField) {
 }
 
 const KEEP_ON_NEW_IDS = [
-  "vendorAddress", "vendorName", "vendorTel", "vendorCode",
+  "vendorAddress", "vendorName", "vendorTel", "vendorCode", "vendorNameFont", "vendorNameSize",
   "stampX",  "stampY",  "stampSize",
   "stampX2", "stampY2", "stampSize2",
   "stampX3", "stampY3", "stampSize3",

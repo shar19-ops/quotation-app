@@ -77,6 +77,15 @@
         <label>住所 <input type="text" id="vendorAddress" disabled></label>
         <label>社名 <input type="text" id="vendorName" disabled></label>
         <div class="two-col">
+          <label>住所・社名の書体 <select id="vendorNameFont" disabled>
+          <option value="">標準(MSゴシック)</option>
+          <option value="'Yu Gothic','MS Gothic',sans-serif">ゴシック体</option>
+          <option value="'Yu Mincho','MS Mincho',serif">明朝体</option>
+          <option value="'Hiragino Mincho ProN','Yu Mincho',serif">ヒラギノ明朝</option>
+          </select></label>
+          <label>社名の文字の大きさ(mm) <input type="number" id="vendorNameSize" step="0.1" min="2" max="10" placeholder="標準 4.1" disabled></label>
+        </div>
+        <div class="two-col">
           <label>電話 <input type="text" id="vendorTel" disabled></label>
           <label>業者コード <input type="text" id="vendorCode" maxlength="10" placeholder="10桁" disabled></label>
         </div>
